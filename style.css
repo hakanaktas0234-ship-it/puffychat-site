@@ -1,0 +1,121 @@
+/* Puffy — site kabugu. Uygulamanin "Kasa" dili: koyu zemin, altin vurgu,
+   basliklarda Cormorant Garamond. Tek dosya, derleme adimi yok. */
+
+:root {
+  --zemin:      #0B0D14;
+  --panel:      #141824;
+  --panel-ust:  #1B2030;
+  --cizgi:      #262C3D;
+  --altin:      #D9B86A;
+  --altin-acik: #FEF9E0;
+  --altin-koyu: #8A6E30;
+  --metin:      #ECE6D8;
+  --solgun:     #98A0B0;
+}
+
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  margin: 0;
+  background: var(--zemin);
+  color: var(--metin);
+  font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-size: 16px;
+  line-height: 1.7;
+  -webkit-font-smoothing: antialiased;
+}
+
+.kabuk { max-width: 720px; margin: 0 auto; padding: 0 20px; }
+
+header.ust {
+  border-bottom: 1px solid var(--cizgi);
+  background: linear-gradient(180deg, #10131D 0%, var(--zemin) 100%);
+}
+header.ust .kabuk {
+  display: flex; align-items: center; gap: 14px;
+  padding-top: 18px; padding-bottom: 18px;
+}
+.marka {
+  font-family: "Cormorant Garamond", Georgia, serif;
+  font-size: 26px; font-weight: 600; letter-spacing: .02em;
+  color: var(--altin-acik); text-decoration: none;
+}
+.marka span { color: var(--altin); }
+header.ust nav { margin-left: auto; display: flex; gap: 18px; flex-wrap: wrap; }
+header.ust nav a { color: var(--solgun); text-decoration: none; font-size: 14px; }
+header.ust nav a:hover, header.ust nav a:focus-visible { color: var(--altin); }
+
+main { padding: 44px 0 72px; }
+
+h1 {
+  font-family: "Cormorant Garamond", Georgia, serif;
+  font-size: clamp(30px, 6vw, 42px);
+  font-weight: 600; line-height: 1.2; margin: 0 0 10px;
+  color: var(--altin-acik); text-wrap: balance;
+}
+h2 {
+  font-family: "Cormorant Garamond", Georgia, serif;
+  font-size: 25px; font-weight: 600; line-height: 1.3;
+  margin: 40px 0 12px; color: var(--altin); text-wrap: balance;
+}
+h3 { font-size: 16px; font-weight: 600; margin: 26px 0 8px; color: var(--metin); }
+
+p { margin: 0 0 16px; }
+a { color: var(--altin); }
+a:hover { color: var(--altin-acik); }
+
+.ozet { color: var(--solgun); font-size: 17px; margin-bottom: 28px; }
+.tarih { color: var(--solgun); font-size: 13px; letter-spacing: .04em; text-transform: uppercase; }
+
+ul, ol { margin: 0 0 16px; padding-left: 22px; }
+li { margin-bottom: 8px; }
+
+.kutu {
+  background: var(--panel);
+  border: 1px solid var(--cizgi);
+  border-radius: 14px;
+  padding: 20px 22px;
+  margin: 22px 0;
+}
+.kutu.vurgu { border-color: var(--altin-koyu); background: var(--panel-ust); }
+.kutu h3:first-child, .kutu h2:first-child { margin-top: 0; }
+.kutu p:last-child, .kutu ul:last-child { margin-bottom: 0; }
+
+table { width: 100%; border-collapse: collapse; margin: 18px 0; font-size: 15px; }
+th, td { text-align: left; padding: 11px 12px; border-bottom: 1px solid var(--cizgi); vertical-align: top; }
+th { color: var(--altin); font-weight: 600; font-size: 13px; letter-spacing: .04em; text-transform: uppercase; }
+.sarmal { overflow-x: auto; }
+
+.dugme {
+  display: inline-block; padding: 13px 26px; border-radius: 999px;
+  background: linear-gradient(180deg, var(--altin) 0%, var(--altin-koyu) 100%);
+  color: #1A1408; font-weight: 600; text-decoration: none;
+  border: 1px solid var(--altin-koyu);
+}
+.dugme:hover { color: #1A1408; filter: brightness(1.07); }
+.dugme.sade { background: transparent; color: var(--altin); border-color: var(--cizgi); }
+
+.eposta { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+
+footer {
+  border-top: 1px solid var(--cizgi);
+  padding: 28px 0 40px;
+  color: var(--solgun); font-size: 14px;
+}
+footer nav { display: flex; gap: 18px; flex-wrap: wrap; margin-bottom: 12px; }
+footer a { color: var(--solgun); text-decoration: none; }
+footer a:hover { color: var(--altin); }
+
+.hero { padding: 16px 0 8px; }
+.hero p { font-size: 18px; color: var(--solgun); max-width: 52ch; }
+.rozetler { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 24px; }
+
+.kartlar { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); margin-top: 34px; }
+.kart { background: var(--panel); border: 1px solid var(--cizgi); border-radius: 14px; padding: 18px 20px; }
+.kart h3 { margin-top: 0; }
+.kart p { margin-bottom: 0; color: var(--solgun); font-size: 15px; }
+
+:focus-visible { outline: 2px solid var(--altin); outline-offset: 2px; }
+
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }

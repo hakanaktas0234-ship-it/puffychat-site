@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Puffy</title>
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Inter:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<header class="ust"><div class="kabuk">
+  <a class="marka" href="/">Puffy<span>.</span></a>
+  <nav><a href="/destek/">Destek</a><a href="/gizlilik/">Gizlilik</a><a href="/hesap-silme/">Hesap silme</a></nav>
+</div></header>
+
+<main><div class="kabuk">
+  <!-- UYGULAMA ZATEN BU ADRESLERE LINK VERIYOR: /room/<id>, /shorts/<id>, /s/<id>.
+       GitHub Pages statik oldugu icin bu yollar 404'e duser; 404 sayfasi adres
+       cubugundaki yolu koruyarak sunuldugundan, dogru karsilamayi burada
+       uretiyoruz. Paylasilan bir oda linki "sayfa bulunamadi" demesin. -->
+  <div id="icerik">
+    <h1>Sayfa bulunamadı</h1>
+    <p class="ozet">Aradığın sayfa taşınmış ya da hiç var olmamış olabilir.</p>
+    <p><a class="dugme sade" href="/">Ana sayfaya dön</a></p>
+  </div>
+</div></main>
+
+<footer><div class="kabuk">
+  <nav><a href="/">Ana sayfa</a><a href="/destek/">Destek</a><a href="/gizlilik/">Gizlilik Politikası</a><a href="/hesap-silme/">Hesap silme</a></nav>
+  <p>&copy; 2026 DRG Dijital Teknoloji Hizmetleri Limited Şirketi · Puffy</p>
+</div></footer>
+
+<script>
+(function () {
+  var PLAY = 'https://play.google.com/store/apps/details?id=com.drgdijital.puffy';
+  var yol = location.pathname.replace(/\/+$/, '');
+  var parca = yol.split('/').filter(Boolean);
+  if (parca.length !== 2) return;
+
+  var tur = parca[0];
+  // Kimlik adres cubugundan geliyor: METIN olarak basilir, HTML olarak asla.
+  var kimlik = decodeURIComponent(parca[1]).slice(0, 64);
+  var baslik, aciklama;
+
+  if (tur === 'room') {
+    baslik = 'Bir Puffy odasına davet edildin';
+    aciklama = 'Odaya girmek için Puffy uygulamasına ihtiyacın var. Kurduktan sonra ' +
+               'oda numarasını arayarak katılabilirsin.';
+  } else if (tur === 'shorts' || tur === 's') {
+    baslik = 'Puffy Shorts videosu';
+    aciklama = 'Bu videoyu izlemek için Puffy uygulamasını kur.';
+  } else {
+    return;
+  }
+
+  var kok = document.getElementById('icerik');
+  kok.textContent = '';
+
+  var h = document.createElement('h1');
+  h.textContent = baslik;
+  kok.appendChild(h);
+
+  var p = document.createElement('p');
+  p.className = 'ozet';
+  p.textContent = aciklama;
+  kok.appendChild(p);
+
+  if (tur === 'room') {
+    var kutu = document.createElement('div');
+    kutu.className = 'kutu vurgu';
+    var etiket = document.createElement('h3');
+    etiket.textContent = 'Oda numarası';
+    var deger = document.createElement('p');
+    deger.className = 'eposta';
+    deger.style.fontSize = '22px';
+    deger.textContent = kimlik;
+    kutu.appendChild(etiket);
+    kutu.appendChild(deger);
+    kok.appendChild(kutu);
+  }
+
+  var a = document.createElement('a');
+  a.className = 'dugme';
+  a.href = PLAY;
+  a.textContent = 'Google Play’den indir';
+  kok.appendChild(a);
+
+  document.title = baslik + ' — Puffy';
+})();
+</script>
+</body>
+</html>
