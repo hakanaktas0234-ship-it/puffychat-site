@@ -66,14 +66,15 @@ video{width:220px;max-height:390px;background:#000;border-radius:10px}
 .toast.acik{opacity:1}
 @media (max-width:760px){#uyg{grid-template-columns:1fr}nav{position:static;height:auto;display:flex;flex-wrap:wrap;gap:4px;align-items:center}nav .marka{width:100%;padding-bottom:8px}nav a.menu{margin:0}nav .alt{position:static;width:100%}main{padding:16px}}
 </style>
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
 
 <!-- GİRİŞ -->
 <section id="giris">
   <div class="kart">
-    <h1>Puffy Yönetim</h1>
-    <p id="giris-aciklama">Sadece platform yöneticileri girebilir.</p>
+    <img class="login-logo" src="puffy-hands.png" alt="Puffy"><h1>Puffy Yönetim</h1>
+    <p id="giris-aciklama">Yetkili hesabınla güvenli giriş yap.</p>
 
     <div id="adim-giris">
       <button class="gbtn" id="btn-google">
@@ -81,8 +82,8 @@ video{width:220px;max-height:390px;background:#000;border-radius:10px}
         Google ile giriş
       </button>
       <div class="ayrac">ya da e-posta ile</div>
-      <div class="alan"><input id="eposta" type="email" placeholder="E-posta" autocomplete="username"></div>
-      <div class="alan"><input id="sifre" type="password" placeholder="Şifre" autocomplete="current-password"></div>
+      <div class="alan"><label for="eposta">E-posta</label><input id="eposta" type="email" placeholder="E-posta" autocomplete="username"></div>
+      <div class="alan"><label for="sifre">Şifre</label><input id="sifre" type="password" placeholder="Şifre" autocomplete="current-password"></div>
       <button class="primary" id="btn-eposta" style="width:100%">Giriş yap</button>
     </div>
 
@@ -91,33 +92,33 @@ video{width:220px;max-height:390px;background:#000;border-radius:10px}
       <div class="qr" id="qr"></div>
       <div class="meta" style="margin-bottom:6px">Kare okutamazsan bu anahtarı elle gir:</div>
       <code class="gizli" id="mfa-secret"></code>
-      <div class="alan"><input id="kod-kur" inputmode="numeric" maxlength="6" placeholder="6 haneli kod"></div>
+      <div class="alan"><label for="kod-kur">Doğrulama kodu</label><input id="kod-kur" inputmode="numeric" maxlength="6" placeholder="6 haneli kod"></div>
       <button class="primary" id="btn-kur" style="width:100%">Doğrula ve etkinleştir</button>
       <div class="meta" style="margin-top:10px">Authenticator'a daha önce eklediğin "Puffy Yönetim" kaydını sil, bu kareyi yeniden okut. Kare değişsin istersen: <a href="#" id="btn-yeniden">yeniden kur</a>.</div>
     </div>
 
     <div id="adim-mfa-dogrula" class="hidden">
       <p>Telefonundaki doğrulama uygulamasındaki <b>6 haneli kodu</b> yaz.</p>
-      <div class="alan"><input id="kod" inputmode="numeric" maxlength="6" placeholder="6 haneli kod" autofocus></div>
+      <div class="alan"><label for="kod">Doğrulama kodu</label><input id="kod" inputmode="numeric" maxlength="6" placeholder="6 haneli kod" autofocus></div>
       <button class="primary" id="btn-dogrula" style="width:100%">Doğrula</button>
     </div>
 
-    <div class="hata" id="giris-hata"></div>
+    <div class="hata" id="giris-hata" role="alert"></div>
     <div style="margin-top:14px"><button id="btn-cikis-giris" class="hidden" style="width:100%">Çıkış</button></div>
   </div>
 </section>
 
 <!-- UYGULAMA -->
 <section id="uyg" class="hidden">
-  <nav>
-    <div class="marka">🍄 Puffy Yönetim</div>
+  <nav><button id="close-menu" class="mobile-close" aria-label="Menüyü kapat">×</button>
+    <div class="marka"><img src="puffy-hands.png" alt=""><div><strong>Puffy</strong><small>Yönetim kasası</small></div></div><div class="nav-caption">Çalışma alanı</div>
     <a class="menu" href="#ozet" data-sayfa="ozet"><span>Özet</span></a>
     <a class="menu" href="#shorts" data-sayfa="shorts"><span>Shorts onayları</span><span class="rozet sifir" id="r-short">0</span></a>
     <a class="menu" href="#sikayet" data-sayfa="sikayet"><span>Şikayetler</span><span class="rozet sifir" id="r-sikayet">0</span></a>
-    <a class="menu" href="#kullanici" data-sayfa="kullanici"><span>Kullanıcılar</span></a>
+    <a class="menu" href="#kullanici" data-sayfa="kullanici"><span>Kullanıcılar</span></a><a class="menu" href="#personel" data-sayfa="personel"><span>Personel ve yetki</span></a>
     <div class="alt"><div id="kim"></div><button id="btn-cikis">Çıkış</button></div>
   </nav>
-  <main>
+  <main><header class="topbar" id="panel-topbar"></header><div class="workspace">
     <div id="s-ozet">
       <div class="ust"><h2>Onay bekleyenler</h2><button id="btn-yenile">Yenile</button></div>
       <div class="ozet" id="ozet-kutular"></div>
@@ -147,13 +148,16 @@ video{width:220px;max-height:390px;background:#000;border-radius:10px}
       <div class="kutu"><div style="display:flex;gap:8px"><input id="ara" placeholder="Ad ya da ID yaz (en az 2 karakter)"><button class="primary" id="btn-ara">Ara</button></div></div>
       <div id="kullanici-liste"></div>
     </div>
-  </main>
+    <div id="s-personel" class="hidden"></div>
+  </div></main>
 </section>
 
-<div class="toast" id="toast"></div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>
+<script src="phase1.js"></script>
 <script>
 const SB_URL = 'https://rjdddbwotczhagdulwco.supabase.co';
 const SB_KEY = 'sb_publishable_TMb-Ldq66Pi3ehxPSYB8JA_aQ-zEeHd';
@@ -168,6 +172,8 @@ function mesaj(e){ const m=(e&&e.message)||String(e); const h={NOT_AUTHORIZED:'B
 
 // ---------- GİRİŞ AKIŞI ----------
 let mfaFactorId = null;
+let panelCaps = {};
+let panelSession = null;
 async function baslat(){
   const { data:{ session } } = await sb.auth.getSession();
   if(!session){ goster('giris'); return; }
@@ -227,10 +233,14 @@ async function kodDogrula(kod){
   await panelAc();
 }
 async function panelAc(){
-  const { data: admin, error } = await sb.rpc('platform_admini_miyim');
-  if(error || !admin){ hata('Bu hesap yönetici değil.'); await sb.auth.signOut(); goster('giris'); return; }
-  const { data:{ user } } = await sb.auth.getUser();
-  $('#kim').textContent = user.email || '';
+  const { data:{ user }, error: userError } = await sb.auth.getUser();
+  if(userError || !user){ goster('giris'); return; }
+  const { data: assurance, error: assuranceError } = await sb.auth.mfa.getAuthenticatorAssuranceLevel();
+  if(assuranceError || assurance?.currentLevel !== 'aal2'){ goster('dogrula'); hata('Güvenlik doğrulamanı tamamla.'); return; }
+  const access = await PuffyPhase1.authorize(sb,user);
+  if(!access.allowed){ hata('Bu hesapta panel erişim yetkisi yok.'); await sb.auth.signOut({ scope: 'local' }); goster('giris'); return; }
+  panelCaps=access.caps; panelSession=user.id;
+  PuffyPhase1.open({sb,user,caps:panelCaps});
   $('#giris').classList.add('hidden'); $('#uyg').classList.remove('hidden');
   sayfaGit(location.hash.replace('#','') || 'ozet');
   ozetYukle();
@@ -247,19 +257,25 @@ $('#btn-eposta').onclick = async () => {
   await mfaKontrol();
 };
 $('#btn-kur').onclick = () => kodDogrula($('#kod-kur').value.trim());
-$('#btn-yeniden').onclick = (e) => { e.preventDefault(); hata(''); mfaKur(true); };
+$('#btn-yeniden').onclick = (e) => { e.preventDefault(); hata(''); return mfaKur(true); };
 $('#btn-dogrula').onclick = () => kodDogrula($('#kod').value.trim());
 $('#kod').addEventListener('keydown', e=>{ if(e.key==='Enter') $('#btn-dogrula').click(); });
 $('#kod-kur').addEventListener('keydown', e=>{ if(e.key==='Enter') $('#btn-kur').click(); });
 $('#sifre').addEventListener('keydown', e=>{ if(e.key==='Enter') $('#btn-eposta').click(); });
-async function cikis(){ await sb.auth.signOut(); location.hash=''; goster('giris'); }
+async function cikis(){ const {error}=await sb.auth.signOut({ scope: 'local' }); if(error){toast('Çıkış tamamlanamadı. Tekrar dene.');return;} PuffyPhase1.close();panelCaps={};panelSession=null;try{sessionStorage.removeItem('puffy_mfa');}catch(_){} location.hash=''; goster('giris'); }
 $('#btn-cikis').onclick = cikis; $('#btn-cikis-giris').onclick = cikis;
 
 // ---------- SAYFALAR ----------
 function sayfaGit(ad){
-  if(!['ozet','shorts','sikayet','kullanici'].includes(ad)) ad='ozet';
-  document.querySelectorAll('nav a.menu').forEach(a=>a.classList.toggle('aktif', a.dataset.sayfa===ad));
-  ['ozet','shorts','sikayet','kullanici'].forEach(s=>$('#s-'+s).classList.toggle('hidden', s!==ad));
+  if(!panelSession) return;
+  ad = ad || 'ozet';
+  if(PuffyPhase1.route(ad)) return;
+  if((ad==='shorts'&&!panelCaps.admin)||(ad==='sikayet'&&!panelCaps.moderator)){ location.hash='ozet'; return; }
+  if(!['shorts','sikayet'].includes(ad)){location.hash='ozet';return;}
+  document.querySelectorAll('nav a.menu').forEach(a=>a.classList.toggle('aktif',a.dataset.sayfa===ad));
+  document.querySelectorAll('.workspace > [id^="s-"]').forEach(s=>s.classList.toggle('hidden',s.id!=='s-'+ad));
+  $('#route-name').textContent=ad==='shorts'?'Shorts onayları':'Şikâyetler';
+  $('#uyg nav').classList.remove('open');
   if(ad==='shorts') shortsYukle();
   if(ad==='sikayet') sikayetYukle();
 }
@@ -269,17 +285,10 @@ $('#btn-yenile').onclick = ozetYukle;
 const OZET_AD = { short:'Shorts onayı', sikayet:'Şikayet', ajans_kurma:'Ajans kurma', ajans_logo:'Ajans logosu', etkinlik:'Etkinlik', oda_kapagi:'Oda kapağı', oda_temasi:'Oda teması', bayi_yukleme:'Bayi yükleme', para_cekme:'Para çekme' };
 const OZET_LINK = { short:'#shorts', sikayet:'#sikayet' };
 async function ozetYukle(){
-  const { data, error } = await sb.rpc('onay_bekleyenler');
-  if(error){ toast(mesaj(error)); return; }
-  const k = $('#ozet-kutular'); k.innerHTML='';
-  for(const key of Object.keys(OZET_AD)){
-    const n = Number(data?.[key] ?? 0);
-    const d = document.createElement('div'); d.className='kutu';
-    d.innerHTML = `<div class="sayi">${n}</div><div class="ad">${OZET_AD[key]}${OZET_LINK[key]?'':' <span class="meta">(uygulamadan)</span>'}</div>`;
-    if(OZET_LINK[key]) d.onclick=()=>location.hash=OZET_LINK[key];
-    k.appendChild(d);
-  }
-  rozet('r-short', data?.short); rozet('r-sikayet', data?.sikayet);
+  if(!panelSession || !panelCaps.admin) return;
+  const {data,error}=await sb.rpc('onay_bekleyenler');
+  if(error || !panelSession) return;
+  rozet('r-short',data?.short);rozet('r-sikayet',data?.sikayet);
 }
 function rozet(id, n){ const e=$('#'+id); n=Number(n||0); e.textContent=n; e.classList.toggle('sifir', n===0); }
 
@@ -358,47 +367,30 @@ async function sikayetYukle(){
   }
 }
 
-// ---------- KULLANICILAR ----------
-$('#btn-ara').onclick = kullaniciAra;
-$('#ara').addEventListener('keydown', e=>{ if(e.key==='Enter') kullaniciAra(); });
-async function kullaniciAra(){
-  const q=$('#ara').value.trim(); const l=$('#kullanici-liste');
-  if(q.length<2){ l.innerHTML='<div class="bos">En az 2 karakter yaz.</div>'; return; }
-  l.innerHTML='<div class="bos">Aranıyor…</div>';
-  const { data, error } = await sb.rpc('moderator_kullanici_ara', { p_sorgu:q });
-  if(error){ l.innerHTML=`<div class="bos">${esc(mesaj(error))}</div>`; return; }
-  if(!data?.length){ l.innerHTML='<div class="bos">Bulunamadı.</div>'; return; }
-  l.innerHTML='';
-  for(const u of data){
-    const d=document.createElement('div'); d.className='kutu';
-    d.innerHTML=`<div class="satir">
-      <img class="avatar" src="${esc(u.avatar_url||'')}" onerror="this.style.visibility='hidden'">
-      <div style="flex:1">
-        <div><b>${esc(u.nickname||'—')}</b> <span class="meta">ID ${esc(u.display_id||'')}</span>
-          ${u.staff_role?`<span class="etiket">${esc(u.staff_role)}</span>`:''}
-          ${u.banli?`<span class="etiket kirmizi">Banlı${u.ban_bitis?' · '+tarih(u.ban_bitis)+' kadar':' · süresiz'}</span>`:'<span class="etiket yesil">Aktif</span>'}
-          ${u.cihaz_banli?'<span class="etiket kirmizi">Cihaz banlı</span>':''}
-        </div>
-        ${u.ban_sebep?`<div class="meta">Sebep: ${esc(u.ban_sebep)}</div>`:''}
-        <div class="islemler">
-          ${u.banli?'<button data-i="kaldir">Banı kaldır</button>':(u.muaf?'<span class="meta">Personel, banlanamaz</span>':'<button class="danger" data-i="ban">Banla</button>')}
-        </div>
-      </div></div>`;
-    const b=d.querySelector('[data-i=ban]'); if(b) b.onclick=()=>banla(u.user_id,u.nickname,kullaniciAra);
-    const k=d.querySelector('[data-i=kaldir]'); if(k) k.onclick=async()=>{ const {error}=await sb.rpc('moderator_bani_kaldir',{p_user:u.user_id}); if(error) return toast(mesaj(error)); toast('Ban kaldırıldı.'); kullaniciAra(); };
-    l.appendChild(d);
-  }
-}
 async function banla(userId, ad, sonra){
   const s=prompt(`${ad||'Kullanıcı'} için ban süresi (saat). Süresiz için 0 yaz:`, '24'); if(s===null) return;
   const saat=parseInt(s,10); if(isNaN(saat)||saat<0){ toast('Geçerli bir sayı yaz.'); return; }
-  const sebep=prompt('Sebep (isteğe bağlı):','')||null;
+  const sebep=prompt('Ban sebebi (en az 3 karakter):',''); if(sebep===null)return; if(sebep.trim().length<3){toast('En az 3 karakterlik sebep yaz.');return;}
   const { error } = await sb.rpc('moderator_ban_user', { p_user:userId, p_hours: saat===0?null:saat, p_reason:sebep });
   if(error) return toast(mesaj(error));
   toast('Kullanıcı banlandı.'); if(sonra) sonra();
 }
 
-baslat();
+let authBusy=false;
+['btn-google','btn-eposta','btn-kur','btn-dogrula','btn-yeniden'].forEach(id=>{
+  const button=$('#'+id), handler=button.onclick;
+  button.onclick=async e=>{e?.preventDefault();if(authBusy)return;authBusy=true;
+    $('#giris').querySelectorAll('button').forEach(b=>b.disabled=true);
+    try{await handler(e);}catch(_){hata('Giriş tamamlanamadı. Tekrar dene.');}
+    finally{authBusy=false;$('#giris').querySelectorAll('button').forEach(b=>b.disabled=false);}
+  };
+});
+sb.auth.onAuthStateChange((event,session)=>{
+  if(event==='SIGNED_OUT' || (event!=='INITIAL_SESSION'&&!session)){
+    panelSession=null;panelCaps={};PuffyPhase1.close();goster('giris');
+  }
+});
+baslat().catch(()=>{hata('Giriş kontrolü tamamlanamadı. Sayfayı yenileyip tekrar dene.');goster('giris');});
 </script>
 </body>
 </html>
