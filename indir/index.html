@@ -15,6 +15,14 @@
   .not { color: var(--solgun); font-size: 14px; margin: 0 0 28px; }
   ol.adim { padding-left: 20px; }
   ol.adim li { margin: 10px 0; }
+  .panel { display:none; border:1px solid var(--altin-koyu); background: var(--panel-ust); border-radius: 14px; padding: 16px 18px; margin: 0 0 28px; }
+  .panel.acik { display:block; }
+  .panel h3 { margin:0 0 6px; color: var(--altin-acik); font-size: 18px; }
+  .panel ol { padding-left: 20px; margin: 8px 0 0; }
+  .panel li { margin: 8px 0; }
+  .nabiz { display:inline-block; width:10px; height:10px; border-radius:50%; background: var(--altin); margin-right:8px; animation: nabiz 1.2s ease-in-out infinite; }
+  @keyframes nabiz { 0%,100%{opacity:.35; transform:scale(.8)} 50%{opacity:1; transform:scale(1.15)} }
+  .dugme.basildi { opacity:.75; pointer-events:none; }
   .uyari { border:1px solid var(--cizgi); background: var(--panel); border-radius: 12px; padding: 14px 16px; font-size: 14px; color: var(--solgun); }
 </style>
 </head>
@@ -28,8 +36,18 @@
   <section class="hero">
     <h1>Puffy'yi indir</h1>
     <p>Android için doğrudan kurulum dosyası. Tek dokunuşla iner, kurulumu sen onaylarsın.</p>
-    <a class="dugme indir-dugme" href="https://rjdddbwotczhagdulwco.supabase.co/storage/v1/object/public/indir/Puffy.apk?download=Puffy.apk">Puffy.apk indir</a>
+    <a id="indirDugme" class="dugme indir-dugme" href="https://rjdddbwotczhagdulwco.supabase.co/storage/v1/object/public/indir/Puffy.apk?download=Puffy.apk">Puffy.apk indir</a>
     <p class="not">Dosya yaklaşık 1,2 GB — Wi-Fi'de indirmeni öneririz. Android 7.0 ve üzeri.</p>
+    <div id="panel" class="panel" aria-live="polite">
+      <h3><span class="nabiz"></span>İndirme başladı</h3>
+      <p class="not" style="margin:0">Dosya arka planda iniyor. Wi-Fi'de yaklaşık 3–8 dakika sürer; bu sayfayı kapatabilirsin.</p>
+      <ol>
+        <li>İlerlemeyi görmek için ekranın üstünden <strong>bildirim çubuğunu aşağı çek</strong>; "Puffy.apk" satırında yüzde yazar.</li>
+        <li>Yüzde 100 olunca o bildirime dokun.</li>
+        <li>"İzin ver" sorarsa izin ver, sonra <strong>Yükle</strong> → <strong>Aç</strong>.</li>
+      </ol>
+      <p class="not" style="margin:12px 0 0">İndirme başlamadıysa <a href="#" id="tekrar">buraya dokunarak tekrar dene</a>.</p>
+    </div>
   </section>
 
   <h2>Kurulum</h2>
@@ -55,5 +73,13 @@
   <nav><a href="/">Ana sayfa</a><a href="/destek/">Destek</a><a href="/gizlilik/">Gizlilik Politikası</a><a href="/kullanim-sartlari/">Kullanım Şartları</a></nav>
   <p>&copy; 2026 DRG Dijital Teknoloji Hizmetleri Limited Şirketi · Puffy</p>
 </div></footer>
+<script>
+(function(){
+  var d=document.getElementById('indirDugme'), p=document.getElementById('panel'), r=document.getElementById('tekrar');
+  function basla(){ p.classList.add('acik'); d.classList.add('basildi'); d.textContent='İndiriliyor…'; p.scrollIntoView({behavior:'smooth',block:'nearest'}); }
+  d.addEventListener('click', function(){ setTimeout(basla, 300); });
+  r.addEventListener('click', function(e){ e.preventDefault(); d.classList.remove('basildi'); d.textContent='Puffy.apk indir'; window.location.href=d.href; setTimeout(basla,300); });
+})();
+</script>
 </body>
 </html>
