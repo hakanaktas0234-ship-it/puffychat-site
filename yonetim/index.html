@@ -92,6 +92,7 @@ video{width:220px;max-height:390px;background:#000;border-radius:10px}
       <code class="gizli" id="mfa-secret"></code>
       <div class="alan"><input id="kod-kur" inputmode="numeric" maxlength="6" placeholder="6 haneli kod"></div>
       <button class="primary" id="btn-kur" style="width:100%">Doğrula ve etkinleştir</button>
+      <div class="meta" style="margin-top:10px">Authenticator'a daha önce eklediğin "Puffy Yönetim" kaydını sil, bu kareyi yeniden okut. Kare değişsin istersen: <a href="#" id="btn-yeniden">yeniden kur</a>.</div>
     </div>
 
     <div id="adim-mfa-dogrula" class="hidden">
@@ -183,21 +184,40 @@ async function mfaKontrol(){
   if(aal && aal.currentLevel === 'aal2'){ await panelAc(); return; }
   const { data: f, error } = await sb.auth.mfa.listFactors();
   if(error){ hata(mesaj(error)); return; }
-  const totp = (f.totp||[]).find(x=>x.status==='verified');
+  // DİKKAT: listFactors().totp yalnız doğrulanmışları döner; yarım
+  // kalanlar .all içinde. Yarım kayıt silinmezse "already exists" hatası.
+  const totp = (f.all||[]).find(x=>x.factor_type==='totp' && x.status==='verified');
   if(totp){ mfaFactorId = totp.id; goster('dogrula'); setTimeout(()=>$('#kod').focus(),50); return; }
-  // Kurulu değil: yarım kalmış kayıtları temizle, yenisini kur
-  for(const u of (f.totp||[]).filter(x=>x.status!=='verified')) await sb.auth.mfa.unenroll({ factorId:u.id });
-  const { data: e, error: e2 } = await sb.auth.mfa.enroll({ factorType:'totp', friendlyName:'Puffy Yönetim' });
+  await mfaKur(false);
+}
+// Anahtar sayfa yenilense de SABİT kalsın: ilk üretilen anahtar bu
+// tarayıcıda saklanır; "Yeniden kur" denmedikçe yenisi üretilmez.
+async function mfaKur(zorla){
+  const { data: f } = await sb.auth.mfa.listFactors();
+  const bekleyen = (f?.all||[]).filter(x=>x.factor_type==='totp' && x.status!=='verified');
+  let kayit = null;
+  try { kayit = JSON.parse(sessionStorage.getItem('puffy_mfa')||'null'); } catch(_){}
+  if(!zorla && kayit && bekleyen.some(x=>x.id===kayit.id)){
+    mfaFactorId = kayit.id; qrGoster(kayit.qr, kayit.secret); goster('kur'); return;
+  }
+  for(const u of bekleyen){ const r = await sb.auth.mfa.unenroll({ factorId:u.id }); if(r.error) console.warn('unenroll', r.error); }
+  const { data: e, error: e2 } = await sb.auth.mfa.enroll({ factorType:'totp', friendlyName:'Puffy Yönetim ' + new Date().toISOString().slice(0,16).replace('T',' ') });
   if(e2){ hata(mesaj(e2)); return; }
   mfaFactorId = e.id;
-  $('#qr').innerHTML = e.totp.qr_code;
-  $('#mfa-secret').textContent = e.totp.secret;
+  try { sessionStorage.setItem('puffy_mfa', JSON.stringify({ id:e.id, qr:e.totp.qr_code, secret:e.totp.secret })); } catch(_){}
+  qrGoster(e.totp.qr_code, e.totp.secret);
   goster('kur');
+}
+function qrGoster(qr, secret){
+  const src = qr.startsWith('data:') ? qr : 'data:image/svg+xml;utf-8,' + encodeURIComponent(qr);
+  $('#qr').innerHTML = `<img src="${src}" alt="Kare kod" style="width:100%;display:block">`;
+  $('#mfa-secret').textContent = secret;
 }
 async function kodDogrula(kod){
   if(!/^\d{6}$/.test(kod)){ hata('6 haneli kodu yaz.'); return; }
   const { error } = await sb.auth.mfa.challengeAndVerify({ factorId: mfaFactorId, code: kod });
-  if(error){ hata('Kod yanlış ya da süresi geçti, tekrar dene.'); return; }
+  if(error){ hata('Kod yanlış ya da süresi geçti. Authenticator\'daki kodu, süresi dolmadan (yeşil çubuk doluyken) yaz.'); return; }
+  try { sessionStorage.removeItem('puffy_mfa'); } catch(_){}
   await panelAc();
 }
 async function panelAc(){
@@ -221,6 +241,7 @@ $('#btn-eposta').onclick = async () => {
   await mfaKontrol();
 };
 $('#btn-kur').onclick = () => kodDogrula($('#kod-kur').value.trim());
+$('#btn-yeniden').onclick = (e) => { e.preventDefault(); hata(''); mfaKur(true); };
 $('#btn-dogrula').onclick = () => kodDogrula($('#kod').value.trim());
 $('#kod').addEventListener('keydown', e=>{ if(e.key==='Enter') $('#btn-dogrula').click(); });
 $('#kod-kur').addEventListener('keydown', e=>{ if(e.key==='Enter') $('#btn-kur').click(); });
