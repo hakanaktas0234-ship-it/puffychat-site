@@ -12,3 +12,5 @@ dialog{color:var(--cream);background:var(--panel);border:1px solid var(--line);b
 [hidden]{display:none!important}pre{white-space:pre-wrap;word-break:break-word;font-size:11px}dialog pre{max-width:100%}
 
 .mobile-close{display:none}@media(max-width:760px){.mobile-close{display:block;align-self:flex-end;font-size:23px;min-width:42px;padding:0 8px;margin-bottom:5px}}
+
+@media(max-width:760px){.data-table.responsive td:first-child[data-label]{display:flex}.data-table.responsive td[data-label]:before{margin-right:12px}}
