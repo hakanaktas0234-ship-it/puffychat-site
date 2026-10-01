@@ -209,8 +209,13 @@ async function mfaKur(zorla){
   goster('kur');
 }
 function qrGoster(qr, secret){
-  const src = qr.startsWith('data:') ? qr : 'data:image/svg+xml;utf-8,' + encodeURIComponent(qr);
-  $('#qr').innerHTML = `<img src="${src}" alt="Kare kod" style="width:100%;display:block">`;
+  // Supabase 'data:image/svg+xml;utf-8,<svg ...>' (kodlanmamış) gönderir;
+  // SVG'yi doğrudan sayfaya gömmek en güvenlisi.
+  const kutu = $('#qr'); kutu.innerHTML = '';
+  const m = qr.match(/^data:image\/svg\+xml;utf-8,(.*)$/s);
+  if (m) { kutu.innerHTML = m[1]; }
+  else if (qr.trim().startsWith('<svg')) { kutu.innerHTML = qr; }
+  else { const img = document.createElement('img'); img.src = qr; img.alt = 'Kare kod'; img.style.cssText = 'width:100%;display:block'; kutu.appendChild(img); }
   $('#mfa-secret').textContent = secret;
 }
 async function kodDogrula(kod){
