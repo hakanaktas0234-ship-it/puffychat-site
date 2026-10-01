@@ -1,0 +1,377 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Puffy Yönetim</title>
+<link rel="icon" href="data:,">
+<style>
+:root{--bg:#0A0C11;--panel:#141821;--panel2:#1B2030;--gold:#D9B86A;--gold2:#8A6E30;--cream:#ECE1C8;--cream60:rgba(236,225,200,.6);--red:#E57373;--green:#4ADE80;--line:rgba(217,184,106,.22)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--cream);font:15px/1.5 -apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+a{color:var(--gold)}
+button{font:inherit;cursor:pointer;border:1px solid var(--line);background:var(--panel2);color:var(--cream);padding:8px 14px;border-radius:10px}
+button:hover{border-color:var(--gold)}
+button.primary{background:linear-gradient(180deg,#E9CB82,#B8923E);color:#1a1405;border-color:#B8923E;font-weight:700}
+button.danger{color:var(--red);border-color:rgba(229,115,115,.4)}
+button:disabled{opacity:.5;cursor:default}
+input,select,textarea{font:inherit;background:#0f131b;color:var(--cream);border:1px solid var(--line);border-radius:10px;padding:10px 12px;width:100%}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--gold)}
+.hidden{display:none!important}
+/* giriş */
+#giris{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:16px}
+.kart{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:28px;width:100%;max-width:380px}
+.kart h1{margin:0 0 4px;font-size:22px;color:var(--gold);letter-spacing:.5px}
+.kart p{margin:0 0 18px;color:var(--cream60);font-size:13px}
+.kart .alan{margin-bottom:12px}
+.gbtn{width:100%;display:flex;align-items:center;justify-content:center;gap:10px;padding:11px;background:#fff;color:#222;border-color:#fff;font-weight:600}
+.ayrac{display:flex;align-items:center;gap:10px;color:var(--cream60);font-size:12px;margin:16px 0}
+.ayrac:before,.ayrac:after{content:"";flex:1;height:1px;background:var(--line)}
+.hata{color:var(--red);font-size:13px;margin-top:10px;min-height:18px}
+.qr{background:#fff;border-radius:12px;padding:10px;margin:12px auto;width:200px}
+.qr svg{width:100%;height:auto;display:block}
+code.gizli{display:block;background:#0f131b;padding:8px;border-radius:8px;font-size:12px;word-break:break-all;margin-bottom:12px}
+/* uygulama */
+#uyg{display:grid;grid-template-columns:230px 1fr;min-height:100vh}
+nav{background:var(--panel);border-right:1px solid var(--line);padding:18px 12px;position:sticky;top:0;height:100vh}
+nav .marka{color:var(--gold);font-weight:800;font-size:18px;padding:6px 10px 16px;letter-spacing:.5px}
+nav a.menu{display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border-radius:10px;color:var(--cream);text-decoration:none;margin-bottom:4px}
+nav a.menu.aktif,nav a.menu:hover{background:var(--panel2)}
+.rozet{background:var(--gold);color:#1a1405;font-size:11px;font-weight:800;border-radius:999px;padding:1px 7px;min-width:20px;text-align:center}
+.rozet.sifir{background:var(--panel2);color:var(--cream60)}
+nav .alt{position:absolute;bottom:16px;left:12px;right:12px;font-size:12px;color:var(--cream60)}
+nav .alt button{width:100%;margin-top:8px}
+main{padding:24px 28px;max-width:1200px}
+h2{margin:0 0 16px;font-size:20px;color:var(--gold)}
+.ust{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px;flex-wrap:wrap}
+.sekmeler{display:flex;gap:6px;flex-wrap:wrap}
+.sekmeler button.aktif{background:var(--gold);color:#1a1405;border-color:var(--gold);font-weight:700}
+.kutu{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:12px}
+.ozet{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px}
+.ozet .kutu{cursor:pointer}
+.ozet .sayi{font-size:32px;font-weight:800;color:var(--gold)}
+.ozet .ad{color:var(--cream60);font-size:13px}
+.satir{display:flex;gap:14px;align-items:flex-start}
+.avatar{width:40px;height:40px;border-radius:50%;background:var(--panel2);object-fit:cover;flex:none}
+.meta{color:var(--cream60);font-size:12.5px}
+.islemler{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+video{width:220px;max-height:390px;background:#000;border-radius:10px}
+.bos{color:var(--cream60);padding:30px;text-align:center}
+.etiket{display:inline-block;background:var(--panel2);border:1px solid var(--line);border-radius:999px;padding:1px 9px;font-size:11.5px;margin-right:6px}
+.etiket.kirmizi{color:var(--red);border-color:rgba(229,115,115,.4)}
+.etiket.yesil{color:var(--green);border-color:rgba(74,222,128,.4)}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--panel2);border:1px solid var(--gold);color:var(--cream);padding:10px 16px;border-radius:12px;opacity:0;transition:.25s;pointer-events:none;z-index:9}
+.toast.acik{opacity:1}
+@media (max-width:760px){#uyg{grid-template-columns:1fr}nav{position:static;height:auto;display:flex;flex-wrap:wrap;gap:4px;align-items:center}nav .marka{width:100%;padding-bottom:8px}nav a.menu{margin:0}nav .alt{position:static;width:100%}main{padding:16px}}
+</style>
+</head>
+<body>
+
+<!-- GİRİŞ -->
+<section id="giris">
+  <div class="kart">
+    <h1>Puffy Yönetim</h1>
+    <p id="giris-aciklama">Sadece platform yöneticileri girebilir.</p>
+
+    <div id="adim-giris">
+      <button class="gbtn" id="btn-google">
+        <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9 3.5l6.7-6.7C35.7 2.5 30.2 0 24 0 14.6 0 6.5 5.4 2.6 13.3l7.8 6.1C12.3 13.6 17.7 9.5 24 9.5z"/><path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.7c-.6 3-2.3 5.5-4.8 7.2l7.5 5.8c4.4-4 7.1-10 7.1-17.5z"/><path fill="#FBBC05" d="M10.4 28.6A14.5 14.5 0 0 1 9.5 24c0-1.6.3-3.2.8-4.6l-7.8-6.1A24 24 0 0 0 0 24c0 3.9.9 7.5 2.6 10.7l7.8-6.1z"/><path fill="#34A853" d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.5-5.8c-2.1 1.4-4.9 2.3-8.4 2.3-6.3 0-11.7-4.1-13.6-9.9l-7.8 6.1C6.5 42.6 14.6 48 24 48z"/></svg>
+        Google ile giriş
+      </button>
+      <div class="ayrac">ya da e-posta ile</div>
+      <div class="alan"><input id="eposta" type="email" placeholder="E-posta" autocomplete="username"></div>
+      <div class="alan"><input id="sifre" type="password" placeholder="Şifre" autocomplete="current-password"></div>
+      <button class="primary" id="btn-eposta" style="width:100%">Giriş yap</button>
+    </div>
+
+    <div id="adim-mfa-kur" class="hidden">
+      <p>İlk kez giriyorsun: telefonuna <b>Google Authenticator</b> (ya da Authy) kur, bu kareyi okut, çıkan 6 haneli kodu yaz.</p>
+      <div class="qr" id="qr"></div>
+      <div class="meta" style="margin-bottom:6px">Kare okutamazsan bu anahtarı elle gir:</div>
+      <code class="gizli" id="mfa-secret"></code>
+      <div class="alan"><input id="kod-kur" inputmode="numeric" maxlength="6" placeholder="6 haneli kod"></div>
+      <button class="primary" id="btn-kur" style="width:100%">Doğrula ve etkinleştir</button>
+    </div>
+
+    <div id="adim-mfa-dogrula" class="hidden">
+      <p>Telefonundaki doğrulama uygulamasındaki <b>6 haneli kodu</b> yaz.</p>
+      <div class="alan"><input id="kod" inputmode="numeric" maxlength="6" placeholder="6 haneli kod" autofocus></div>
+      <button class="primary" id="btn-dogrula" style="width:100%">Doğrula</button>
+    </div>
+
+    <div class="hata" id="giris-hata"></div>
+    <div style="margin-top:14px"><button id="btn-cikis-giris" class="hidden" style="width:100%">Çıkış</button></div>
+  </div>
+</section>
+
+<!-- UYGULAMA -->
+<section id="uyg" class="hidden">
+  <nav>
+    <div class="marka">🍄 Puffy Yönetim</div>
+    <a class="menu" href="#ozet" data-sayfa="ozet"><span>Özet</span></a>
+    <a class="menu" href="#shorts" data-sayfa="shorts"><span>Shorts onayları</span><span class="rozet sifir" id="r-short">0</span></a>
+    <a class="menu" href="#sikayet" data-sayfa="sikayet"><span>Şikayetler</span><span class="rozet sifir" id="r-sikayet">0</span></a>
+    <a class="menu" href="#kullanici" data-sayfa="kullanici"><span>Kullanıcılar</span></a>
+    <div class="alt"><div id="kim"></div><button id="btn-cikis">Çıkış</button></div>
+  </nav>
+  <main>
+    <div id="s-ozet">
+      <div class="ust"><h2>Onay bekleyenler</h2><button id="btn-yenile">Yenile</button></div>
+      <div class="ozet" id="ozet-kutular"></div>
+      <p class="meta" style="margin-top:14px">Shorts ve şikayetler bu panelden; diğerleri şimdilik uygulamadaki yönetici panelinden yapılır.</p>
+    </div>
+
+    <div id="s-shorts" class="hidden">
+      <div class="ust"><h2>Shorts onayları</h2><button id="btn-shorts-yenile">Yenile</button></div>
+      <div id="shorts-liste"></div>
+    </div>
+
+    <div id="s-sikayet" class="hidden">
+      <div class="ust"><h2>Şikayetler</h2>
+        <div class="sekmeler" id="sikayet-sekmeler">
+          <button data-tur="kullanici" class="aktif">Kullanıcı</button>
+          <button data-tur="video">Video</button>
+          <button data-tur="oda">Oda</button>
+          <button data-tur="an">An</button>
+          <button data-tur="yorum">Yorum</button>
+        </div>
+      </div>
+      <div id="sikayet-liste"></div>
+    </div>
+
+    <div id="s-kullanici" class="hidden">
+      <div class="ust"><h2>Kullanıcılar</h2></div>
+      <div class="kutu"><div style="display:flex;gap:8px"><input id="ara" placeholder="Ad ya da ID yaz (en az 2 karakter)"><button class="primary" id="btn-ara">Ara</button></div></div>
+      <div id="kullanici-liste"></div>
+    </div>
+  </main>
+</section>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script>
+const SB_URL = 'https://rjdddbwotczhagdulwco.supabase.co';
+const SB_KEY = 'sb_publishable_TMb-Ldq66Pi3ehxPSYB8JA_aQ-zEeHd';
+const sb = supabase.createClient(SB_URL, SB_KEY);
+const $ = (s) => document.querySelector(s);
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+let toastT;
+function toast(m){ const t=$('#toast'); t.textContent=m; t.classList.add('acik'); clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove('acik'),2600); }
+function hata(m){ $('#giris-hata').textContent = m || ''; }
+function tarih(s){ if(!s) return ''; const d=new Date(s); return d.toLocaleString('tr-TR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}); }
+function mesaj(e){ const m=(e&&e.message)||String(e); const h={NOT_AUTHORIZED:'Bunun için yetkin yok.',UNAUTHORIZED:'Bunun için yetkin yok.',NOT_ALLOWED:'Bunun için yetkin yok.',ALREADY_REVIEWED:'Bu kayıt başkası tarafından sonuçlandırılmış.',PERSONEL_MUAF:'Personel hesapları banlanamaz.',INVALID_TARGET:'Kendini banlayamazsın.'}; for(const k in h) if(m.includes(k)) return h[k]; return m; }
+
+// ---------- GİRİŞ AKIŞI ----------
+let mfaFactorId = null;
+async function baslat(){
+  const { data:{ session } } = await sb.auth.getSession();
+  if(!session){ goster('giris'); return; }
+  await mfaKontrol();
+}
+function goster(adim){
+  $('#adim-giris').classList.toggle('hidden', adim!=='giris');
+  $('#adim-mfa-kur').classList.toggle('hidden', adim!=='kur');
+  $('#adim-mfa-dogrula').classList.toggle('hidden', adim!=='dogrula');
+  $('#btn-cikis-giris').classList.toggle('hidden', adim==='giris');
+  $('#giris').classList.remove('hidden'); $('#uyg').classList.add('hidden');
+}
+async function mfaKontrol(){
+  hata('');
+  const { data: aal } = await sb.auth.mfa.getAuthenticatorAssuranceLevel();
+  if(aal && aal.currentLevel === 'aal2'){ await panelAc(); return; }
+  const { data: f, error } = await sb.auth.mfa.listFactors();
+  if(error){ hata(mesaj(error)); return; }
+  const totp = (f.totp||[]).find(x=>x.status==='verified');
+  if(totp){ mfaFactorId = totp.id; goster('dogrula'); setTimeout(()=>$('#kod').focus(),50); return; }
+  // Kurulu değil: yarım kalmış kayıtları temizle, yenisini kur
+  for(const u of (f.totp||[]).filter(x=>x.status!=='verified')) await sb.auth.mfa.unenroll({ factorId:u.id });
+  const { data: e, error: e2 } = await sb.auth.mfa.enroll({ factorType:'totp', friendlyName:'Puffy Yönetim' });
+  if(e2){ hata(mesaj(e2)); return; }
+  mfaFactorId = e.id;
+  $('#qr').innerHTML = e.totp.qr_code;
+  $('#mfa-secret').textContent = e.totp.secret;
+  goster('kur');
+}
+async function kodDogrula(kod){
+  if(!/^\d{6}$/.test(kod)){ hata('6 haneli kodu yaz.'); return; }
+  const { error } = await sb.auth.mfa.challengeAndVerify({ factorId: mfaFactorId, code: kod });
+  if(error){ hata('Kod yanlış ya da süresi geçti, tekrar dene.'); return; }
+  await panelAc();
+}
+async function panelAc(){
+  const { data: admin, error } = await sb.rpc('platform_admini_miyim');
+  if(error || !admin){ hata('Bu hesap yönetici değil.'); await sb.auth.signOut(); goster('giris'); return; }
+  const { data:{ user } } = await sb.auth.getUser();
+  $('#kim').textContent = user.email || '';
+  $('#giris').classList.add('hidden'); $('#uyg').classList.remove('hidden');
+  sayfaGit(location.hash.replace('#','') || 'ozet');
+  ozetYukle();
+}
+$('#btn-google').onclick = async () => {
+  hata('');
+  const { error } = await sb.auth.signInWithOAuth({ provider:'google', options:{ redirectTo: location.origin + location.pathname } });
+  if(error) hata(mesaj(error));
+};
+$('#btn-eposta').onclick = async () => {
+  hata('');
+  const { error } = await sb.auth.signInWithPassword({ email: $('#eposta').value.trim(), password: $('#sifre').value });
+  if(error){ hata('E-posta ya da şifre yanlış.'); return; }
+  await mfaKontrol();
+};
+$('#btn-kur').onclick = () => kodDogrula($('#kod-kur').value.trim());
+$('#btn-dogrula').onclick = () => kodDogrula($('#kod').value.trim());
+$('#kod').addEventListener('keydown', e=>{ if(e.key==='Enter') $('#btn-dogrula').click(); });
+$('#kod-kur').addEventListener('keydown', e=>{ if(e.key==='Enter') $('#btn-kur').click(); });
+$('#sifre').addEventListener('keydown', e=>{ if(e.key==='Enter') $('#btn-eposta').click(); });
+async function cikis(){ await sb.auth.signOut(); location.hash=''; goster('giris'); }
+$('#btn-cikis').onclick = cikis; $('#btn-cikis-giris').onclick = cikis;
+
+// ---------- SAYFALAR ----------
+function sayfaGit(ad){
+  if(!['ozet','shorts','sikayet','kullanici'].includes(ad)) ad='ozet';
+  document.querySelectorAll('nav a.menu').forEach(a=>a.classList.toggle('aktif', a.dataset.sayfa===ad));
+  ['ozet','shorts','sikayet','kullanici'].forEach(s=>$('#s-'+s).classList.toggle('hidden', s!==ad));
+  if(ad==='shorts') shortsYukle();
+  if(ad==='sikayet') sikayetYukle();
+}
+window.addEventListener('hashchange', ()=>sayfaGit(location.hash.replace('#','')));
+$('#btn-yenile').onclick = ozetYukle;
+
+const OZET_AD = { short:'Shorts onayı', sikayet:'Şikayet', ajans_kurma:'Ajans kurma', ajans_logo:'Ajans logosu', etkinlik:'Etkinlik', oda_kapagi:'Oda kapağı', oda_temasi:'Oda teması', bayi_yukleme:'Bayi yükleme', para_cekme:'Para çekme' };
+const OZET_LINK = { short:'#shorts', sikayet:'#sikayet' };
+async function ozetYukle(){
+  const { data, error } = await sb.rpc('onay_bekleyenler');
+  if(error){ toast(mesaj(error)); return; }
+  const k = $('#ozet-kutular'); k.innerHTML='';
+  for(const key of Object.keys(OZET_AD)){
+    const n = Number(data?.[key] ?? 0);
+    const d = document.createElement('div'); d.className='kutu';
+    d.innerHTML = `<div class="sayi">${n}</div><div class="ad">${OZET_AD[key]}${OZET_LINK[key]?'':' <span class="meta">(uygulamadan)</span>'}</div>`;
+    if(OZET_LINK[key]) d.onclick=()=>location.hash=OZET_LINK[key];
+    k.appendChild(d);
+  }
+  rozet('r-short', data?.short); rozet('r-sikayet', data?.sikayet);
+}
+function rozet(id, n){ const e=$('#'+id); n=Number(n||0); e.textContent=n; e.classList.toggle('sifir', n===0); }
+
+// ---------- SHORTS ----------
+$('#btn-shorts-yenile').onclick = shortsYukle;
+async function shortsYukle(){
+  const l=$('#shorts-liste'); l.innerHTML='<div class="bos">Yükleniyor…</div>';
+  const { data, error } = await sb.rpc('shorts_onay_kuyrugu', { p_limit: 100 });
+  if(error){ l.innerHTML=`<div class="bos">${esc(mesaj(error))}</div>`; return; }
+  if(!data?.length){ l.innerHTML='<div class="bos">Bekleyen video yok.</div>'; rozet('r-short',0); return; }
+  rozet('r-short', data[0].bekleyen_toplam);
+  l.innerHTML='';
+  for(const s of data){
+    const d=document.createElement('div'); d.className='kutu';
+    const tags=(s.hashtags||[]).map(h=>'#'+esc(h)).join(' ');
+    d.innerHTML=`<div class="satir">
+      <video src="${esc(s.video_url)}" poster="${esc(s.thumbnail_url||'')}" controls preload="none" playsinline></video>
+      <div style="flex:1">
+        <div><b>${esc(s.creator_nickname||'—')}</b> <span class="meta">ID ${esc(s.creator_display_id||'')} · ${tarih(s.created_at)} · ${s.duration_seconds||0} sn</span></div>
+        ${s.is_sensitive_content?'<div style="margin-top:6px"><span class="etiket kirmizi">Hassas içerik işaretli</span></div>':''}
+        <div style="margin-top:8px">${esc(s.caption||'')}</div>
+        <div class="meta" style="margin-top:4px;color:var(--gold)">${tags}</div>
+        <div class="islemler">
+          <button class="primary" data-onay="1">Onayla</button>
+          <button class="danger" data-onay="0">Reddet</button>
+        </div>
+      </div></div>`;
+    d.querySelectorAll('button[data-onay]').forEach(b=>b.onclick=()=>shortKarar(s, b.dataset.onay==='1', d));
+    l.appendChild(d);
+  }
+}
+async function shortKarar(s, onay, kart){
+  let sebep=null;
+  if(!onay){ sebep=prompt('Red sebebi (isteğe bağlı):',''); if(sebep===null) return; }
+  kart.querySelectorAll('button').forEach(b=>b.disabled=true);
+  const { data, error } = await sb.rpc('resolve_short_moderation', { p_short_id:s.short_id, p_approved:onay, p_reason:sebep });
+  if(error){ toast(mesaj(error)); kart.querySelectorAll('button').forEach(b=>b.disabled=false); return; }
+  if(!onay && data?.files?.length){
+    const yollar=data.files.filter(f=>f.bucket==='shorts').map(f=>f.path);
+    if(yollar.length){ const r=await sb.storage.from('shorts').remove(yollar); if(r.error) console.warn('dosya silinemedi', r.error); }
+  }
+  toast(onay?'Video onaylandı, akışa girdi.':'Video reddedildi.');
+  kart.remove(); ozetYukle();
+  if(!$('#shorts-liste').children.length) $('#shorts-liste').innerHTML='<div class="bos">Bekleyen video yok.</div>';
+}
+
+// ---------- ŞİKAYETLER ----------
+let sikayetTur='kullanici';
+$('#sikayet-sekmeler').querySelectorAll('button').forEach(b=>b.onclick=()=>{ sikayetTur=b.dataset.tur; $('#sikayet-sekmeler').querySelectorAll('button').forEach(x=>x.classList.toggle('aktif',x===b)); sikayetYukle(); });
+const SEBEP = { child_safety:'Çocuk güvenliği', harassment:'Taciz', spam:'Spam', nudity:'Müstehcenlik', violence:'Şiddet', hate:'Nefret söylemi', scam:'Dolandırıcılık', other:'Diğer' };
+async function sikayetYukle(){
+  const l=$('#sikayet-liste'); l.innerHTML='<div class="bos">Yükleniyor…</div>';
+  const { data, error } = await sb.rpc('moderator_sikayet_kuyrugu', { p_tur:sikayetTur, p_limit:100, p_offset:0 });
+  if(error){ l.innerHTML=`<div class="bos">${esc(mesaj(error))}</div>`; return; }
+  if(!data?.length){ l.innerHTML='<div class="bos">Bu türde şikayet yok.</div>'; return; }
+  l.innerHTML='';
+  for(const r of data){
+    const d=document.createElement('div'); d.className='kutu';
+    const kaldirilabilir = ['short','moment','short_comment'].includes(r.icerik_turu);
+    d.innerHTML=`<div class="satir">
+      <img class="avatar" src="${esc(r.hedef_avatar||'')}" onerror="this.style.visibility='hidden'">
+      <div style="flex:1">
+        <div><span class="etiket ${r.sebep==='child_safety'?'kirmizi':''}">${esc(SEBEP[r.sebep]||r.sebep||'')}</span><span class="meta">${tarih(r.olusturuldu)}</span></div>
+        <div style="margin-top:6px"><b>${esc(r.hedef_ad||'—')}</b> <span class="meta">hakkında · şikayet eden: ${esc(r.sikayet_eden_ad||'—')}</span></div>
+        ${r.onizleme?`<div class="meta" style="margin-top:4px">“${esc(r.onizleme)}”</div>`:''}
+        <div class="islemler">
+          <button data-i="kapat">Şikayeti kapat</button>
+          ${kaldirilabilir?'<button class="danger" data-i="kaldir">İçeriği kaldır</button>':''}
+          ${r.hedef_id?'<button class="danger" data-i="ban">Kullanıcıyı banla</button>':''}
+        </div>
+      </div></div>`;
+    d.querySelector('[data-i=kapat]').onclick=async()=>{ const {error}=await sb.rpc('moderator_sikayeti_kapat',{p_tur:r.kaynak,p_id:r.sikayet_id}); if(error) return toast(mesaj(error)); toast('Şikayet kapatıldı.'); d.remove(); ozetYukle(); };
+    const k=d.querySelector('[data-i=kaldir]'); if(k) k.onclick=async()=>{ if(!confirm('İçerik kaldırılsın mı?')) return; const {error}=await sb.rpc('moderator_icerigi_kaldir',{p_tur:r.icerik_turu,p_id:r.icerik_id}); if(error) return toast(mesaj(error)); toast('İçerik kaldırıldı.'); d.remove(); ozetYukle(); };
+    const b=d.querySelector('[data-i=ban]'); if(b) b.onclick=()=>banla(r.hedef_id, r.hedef_ad);
+    l.appendChild(d);
+  }
+}
+
+// ---------- KULLANICILAR ----------
+$('#btn-ara').onclick = kullaniciAra;
+$('#ara').addEventListener('keydown', e=>{ if(e.key==='Enter') kullaniciAra(); });
+async function kullaniciAra(){
+  const q=$('#ara').value.trim(); const l=$('#kullanici-liste');
+  if(q.length<2){ l.innerHTML='<div class="bos">En az 2 karakter yaz.</div>'; return; }
+  l.innerHTML='<div class="bos">Aranıyor…</div>';
+  const { data, error } = await sb.rpc('moderator_kullanici_ara', { p_sorgu:q });
+  if(error){ l.innerHTML=`<div class="bos">${esc(mesaj(error))}</div>`; return; }
+  if(!data?.length){ l.innerHTML='<div class="bos">Bulunamadı.</div>'; return; }
+  l.innerHTML='';
+  for(const u of data){
+    const d=document.createElement('div'); d.className='kutu';
+    d.innerHTML=`<div class="satir">
+      <img class="avatar" src="${esc(u.avatar_url||'')}" onerror="this.style.visibility='hidden'">
+      <div style="flex:1">
+        <div><b>${esc(u.nickname||'—')}</b> <span class="meta">ID ${esc(u.display_id||'')}</span>
+          ${u.staff_role?`<span class="etiket">${esc(u.staff_role)}</span>`:''}
+          ${u.banli?`<span class="etiket kirmizi">Banlı${u.ban_bitis?' · '+tarih(u.ban_bitis)+' kadar':' · süresiz'}</span>`:'<span class="etiket yesil">Aktif</span>'}
+          ${u.cihaz_banli?'<span class="etiket kirmizi">Cihaz banlı</span>':''}
+        </div>
+        ${u.ban_sebep?`<div class="meta">Sebep: ${esc(u.ban_sebep)}</div>`:''}
+        <div class="islemler">
+          ${u.banli?'<button data-i="kaldir">Banı kaldır</button>':(u.muaf?'<span class="meta">Personel, banlanamaz</span>':'<button class="danger" data-i="ban">Banla</button>')}
+        </div>
+      </div></div>`;
+    const b=d.querySelector('[data-i=ban]'); if(b) b.onclick=()=>banla(u.user_id,u.nickname,kullaniciAra);
+    const k=d.querySelector('[data-i=kaldir]'); if(k) k.onclick=async()=>{ const {error}=await sb.rpc('moderator_bani_kaldir',{p_user:u.user_id}); if(error) return toast(mesaj(error)); toast('Ban kaldırıldı.'); kullaniciAra(); };
+    l.appendChild(d);
+  }
+}
+async function banla(userId, ad, sonra){
+  const s=prompt(`${ad||'Kullanıcı'} için ban süresi (saat). Süresiz için 0 yaz:`, '24'); if(s===null) return;
+  const saat=parseInt(s,10); if(isNaN(saat)||saat<0){ toast('Geçerli bir sayı yaz.'); return; }
+  const sebep=prompt('Sebep (isteğe bağlı):','')||null;
+  const { error } = await sb.rpc('moderator_ban_user', { p_user:userId, p_hours: saat===0?null:saat, p_reason:sebep });
+  if(error) return toast(mesaj(error));
+  toast('Kullanıcı banlandı.'); if(sonra) sonra();
+}
+
+baslat();
+</script>
+</body>
+</html>
