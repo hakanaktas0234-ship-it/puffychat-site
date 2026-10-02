@@ -167,7 +167,29 @@ video{width:220px;max-height:390px;background:#000;border-radius:10px}
 <script>
 const SB_URL = 'https://rjdddbwotczhagdulwco.supabase.co';
 const SB_KEY = 'sb_publishable_TMb-Ldq66Pi3ehxPSYB8JA_aQ-zEeHd';
-const sb = supabase.createClient(SB_URL, SB_KEY);
+// Oturum güvenliği (Claude, 2026-10-02): oturum yalnız bu sekmede tutulur
+// (sekme/tarayıcı kapanınca çıkış). 30 dk işlem yapılmazsa ve girişten
+// 12 saat sonra otomatik çıkış. Eski kalıcı (localStorage) oturum silinir.
+const OTURUM_BOSTA_MS = 30*60*1000, OTURUM_AZAMI_MS = 12*60*60*1000;
+try { Object.keys(localStorage).filter(k=>k.startsWith('sb-')&&k.endsWith('-auth-token')).forEach(k=>localStorage.removeItem(k)); } catch(_){}
+const sb = supabase.createClient(SB_URL, SB_KEY, { auth: { storage: window.sessionStorage, persistSession: true, autoRefreshToken: true } });
+function oturumOku(k){ try { return Number(sessionStorage.getItem(k)||0); } catch(_){ return 0; } }
+function oturumYaz(k,v){ try { sessionStorage.setItem(k,String(v)); } catch(_){} }
+function hareketKaydet(){ if(panelSession && oturumSuresiDoldu()){ oturumDenetle().catch(()=>{}); return; } const s=Date.now(); if(s-oturumOku('puffy_son_hareket')>15000) oturumYaz('puffy_son_hareket', s); }
+['pointerdown','keydown','wheel','touchstart'].forEach(ev=>addEventListener(ev, hareketKaydet, {passive:true}));
+function oturumSuresiDoldu(){
+  const simdi=Date.now(), son=oturumOku('puffy_son_hareket'), giris=oturumOku('puffy_giris_zamani');
+  if(son && simdi-son > OTURUM_BOSTA_MS) return '30 dakika işlem yapılmadığı için güvenlik amacıyla çıkış yapıldı.';
+  if(giris && simdi-giris > OTURUM_AZAMI_MS) return 'Oturum süresi (12 saat) doldu; yeniden giriş yap.';
+  return null;
+}
+async function oturumDenetle(){
+  if(!panelSession) return;
+  const neden = oturumSuresiDoldu();
+  if(neden){ await cikis(); hata(neden); toast(neden); }
+}
+setInterval(()=>{ oturumDenetle().catch(()=>{}); }, 60000);
+document.addEventListener('visibilitychange', ()=>{ if(document.visibilityState==='visible') oturumDenetle().catch(()=>{}); });
 const $ = (s) => document.querySelector(s);
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 let toastT;
@@ -183,6 +205,10 @@ let panelSession = null;
 async function baslat(){
   const { data:{ session } } = await sb.auth.getSession();
   if(!session){ goster('giris'); return; }
+  const neden = oturumSuresiDoldu();
+  if(neden){ await sb.auth.signOut({ scope:'local' }); goster('giris'); hata(neden); return; }
+  if(!oturumOku('puffy_giris_zamani')) oturumYaz('puffy_giris_zamani', Date.now());
+  oturumYaz('puffy_son_hareket', Date.now());
   await mfaKontrol();
 }
 function goster(adim){
@@ -260,6 +286,7 @@ $('#btn-eposta').onclick = async () => {
   hata('');
   const { error } = await sb.auth.signInWithPassword({ email: $('#eposta').value.trim(), password: $('#sifre').value });
   if(error){ hata('E-posta ya da şifre yanlış.'); return; }
+  oturumYaz('puffy_giris_zamani', Date.now()); oturumYaz('puffy_son_hareket', Date.now());
   await mfaKontrol();
 };
 $('#btn-kur').onclick = () => kodDogrula($('#kod-kur').value.trim());
@@ -268,7 +295,7 @@ $('#btn-dogrula').onclick = () => kodDogrula($('#kod').value.trim());
 $('#kod').addEventListener('keydown', e=>{ if(e.key==='Enter') $('#btn-dogrula').click(); });
 $('#kod-kur').addEventListener('keydown', e=>{ if(e.key==='Enter') $('#btn-kur').click(); });
 $('#sifre').addEventListener('keydown', e=>{ if(e.key==='Enter') $('#btn-eposta').click(); });
-async function cikis(){ const {error}=await sb.auth.signOut({ scope: 'local' }); if(error){toast('Çıkış tamamlanamadı. Tekrar dene.');return;} PuffyPhase1.close();panelCaps={};panelSession=null;try{sessionStorage.removeItem('puffy_mfa');}catch(_){} location.hash=''; goster('giris'); }
+async function cikis(){ const {error}=await sb.auth.signOut({ scope: 'local' }); if(error){toast('Çıkış tamamlanamadı. Tekrar dene.');return;} PuffyPhase1.close();panelCaps={};panelSession=null;try{sessionStorage.removeItem('puffy_mfa');sessionStorage.removeItem('puffy_giris_zamani');sessionStorage.removeItem('puffy_son_hareket');}catch(_){} location.hash=''; goster('giris'); }
 $('#btn-cikis').onclick = cikis; $('#btn-cikis-giris').onclick = cikis;
 
 // ---------- SAYFALAR ----------
