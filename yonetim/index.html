@@ -116,9 +116,11 @@ video{width:220px;max-height:390px;background:#000;border-radius:10px}
     <a class="menu" href="#shorts" data-sayfa="shorts"><span>Shorts onayları</span><span class="rozet sifir" id="r-short">0</span></a>
     <a class="menu" href="#sikayet" data-sayfa="sikayet"><span>Şikayetler</span><span class="rozet sifir" id="r-sikayet">0</span></a>
     <a class="menu" href="#kullanici" data-sayfa="kullanici"><span>Kullanıcılar</span></a><a class="menu" href="#personel" data-sayfa="personel"><span>Personel ve yetki</span></a>
+    <a class="menu" href="#kasa" data-sayfa="kasa" hidden><span>Kasa geçmişi</span></a>
     <div class="alt"><div id="kim"></div><button id="btn-cikis">Çıkış</button></div>
   </nav>
   <main><header class="topbar" id="panel-topbar"></header><div class="workspace">
+    <div id="s-kasa" class="hidden"></div>
     <div id="s-ozet">
       <div class="ust"><h2>Onay bekleyenler</h2><button id="btn-yenile">Yenile</button></div>
       <div class="ozet" id="ozet-kutular"></div>
@@ -158,6 +160,7 @@ video{width:220px;max-height:390px;background:#000;border-radius:10px}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>
 <script src="phase2.js"></script>
+<script src="phase3.js"></script>
 <script src="phase1.js"></script>
 <script>
 const SB_URL = 'https://rjdddbwotczhagdulwco.supabase.co';
