@@ -40,10 +40,10 @@
       top.querySelector('.mobile-menu').onclick=()=>{const visible=$('#uyg nav').classList.toggle('open');top.querySelector('.mobile-menu').setAttribute('aria-expanded',String(visible));};
       $('#global-search').onsubmit=e=>{e.preventDefault();state.query=$('#global-query').value.trim();state.filters={};state.directId=/^[0-9]+$/.test(state.query);state.page=0;location.hash='kullanici'; if(state.route==='kullanici') users();};
     }
-    window.PuffyApprovals?.init(phase2Context());window.PuffyIcerik?.init(phase2Context());window.PuffyTopluluk?.init(phase2Context());window.PuffyGozlem?.init(phase2Context());
+    window.PuffyApprovals?.init(phase2Context());window.PuffyIcerik?.init(phase2Context());window.PuffyTopluluk?.init(phase2Context());window.PuffyGozlem?.init(phase2Context());window.PuffyHediyeler?.init(phase2Context());
     $('#global-search').hidden=!(caps.admin||caps.sanction);$('#close-menu').onclick=()=>{$('#uyg nav').classList.remove('open');$('#panel-topbar .mobile-menu').setAttribute('aria-expanded','false');};
   }
-  function close() { window.PuffyApprovals?.stop();window.PuffyIcerik?.stop();window.PuffyTopluluk?.stop();window.PuffyGozlem?.stop();state.epoch++;state.user=null;state.detail=null;state.route='';state.chart?.destroy();state.chart=null;$('#s-kullanici').replaceChildren();$('#s-personel').replaceChildren();$('#s-ozet').replaceChildren();$('#s-kasa').replaceChildren();document.querySelector('dialog')?.close(); }
+  function close() { window.PuffyApprovals?.stop();window.PuffyIcerik?.stop();window.PuffyTopluluk?.stop();window.PuffyGozlem?.stop();window.PuffyHediyeler?.stop();state.epoch++;state.user=null;state.detail=null;state.route='';state.chart?.destroy();state.chart=null;$('#s-kullanici').replaceChildren();$('#s-personel').replaceChildren();$('#s-ozet').replaceChildren();$('#s-kasa').replaceChildren();document.querySelector('dialog')?.close(); }
   function route(hash) {
     const [base,qs]=hash.split('?');const params=new URLSearchParams(qs||'');const [page,id]=base.split('/');if(page==='kullanici'&&qs){state.query='';state.page=0;state.filters={donem:params.get('donem')||'',gun:Number(params.get('gun'))||7,surum:params.get('surum')||'',platform:params.get('platform')||''};} if(!['ozet','kullanici','personel','kasa'].includes(page)) {state.epoch++;state.route=page;return false;}
     if(!state.user)return true;

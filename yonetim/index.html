@@ -122,9 +122,10 @@ video{width:220px;max-height:390px;background:#000;border-radius:10px}
     <a class="menu" href="#oda-gozlem" data-sayfa="oda-gozlem" hidden><span>Canlı odalar / kişiler</span></a>
     <a class="menu" href="#call-host" data-sayfa="call-host" hidden><span>Call Host aktifliği</span></a>
     <a class="menu" href="#kasa" data-sayfa="kasa" hidden><span>Kasa geçmişi</span></a>
-    <div id="approval-nav"></div><div class="alt"><div id="kim"></div><button id="btn-cikis">Çıkış</button></div>
+    <div id="approval-nav"></div><div id="hediye-nav"></div><div class="alt"><div id="kim"></div><button id="btn-cikis">Çıkış</button></div>
   </nav>
   <main><header class="topbar" id="panel-topbar"></header><div class="workspace">
+    <div id="s-hediye" class="hidden"></div>
     <div id="s-gozlem" class="hidden"></div>
     <div id="s-topluluk" class="hidden"></div>
     <div id="s-onay" class="hidden"></div>
@@ -173,6 +174,7 @@ video{width:220px;max-height:390px;background:#000;border-radius:10px}
 <script src="icerik.js"></script>
 <script src="topluluklar.js"></script>
 <script src="gozlem.js"></script>
+<script src="hediyeler.js"></script>
 <script src="phase1.js"></script>
 <script>
 const SB_URL = 'https://rjdddbwotczhagdulwco.supabase.co';
@@ -312,6 +314,7 @@ $('#btn-cikis').onclick = cikis; $('#btn-cikis-giris').onclick = cikis;
 function sayfaGit(ad){
   if(!panelSession) return;
   ad = ad || 'ozet';
+  if(window.PuffyHediyeler&&PuffyHediyeler.route(ad)){PuffyPhase1.route(ad);return;}
   if(window.PuffyGozlem&&PuffyGozlem.route(ad)){PuffyPhase1.route(ad);return;}
   if(window.PuffyTopluluk&&PuffyTopluluk.route(ad)){PuffyPhase1.route(ad);return;}
   if(ad.startsWith('onay/')){PuffyPhase1.route(ad);if(PuffyApprovals.route(ad))return;}
