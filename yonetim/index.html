@@ -163,6 +163,7 @@ video{width:220px;max-height:390px;background:#000;border-radius:10px}
 <script src="phase2.js"></script>
 <script src="phase3.js"></script>
 <script src="approvals.js"></script>
+<script src="icerik.js"></script>
 <script src="phase1.js"></script>
 <script>
 const SB_URL = 'https://rjdddbwotczhagdulwco.supabase.co';
@@ -304,6 +305,7 @@ function sayfaGit(ad){
   ad = ad || 'ozet';
   if(ad.startsWith('onay/')){PuffyPhase1.route(ad);if(PuffyApprovals.route(ad))return;}
   if(ad==='canli-odalar'){PuffyApprovals.liveRooms();return;}
+  if(window.PuffyIcerik&&PuffyIcerik.route(ad))return;
   if(PuffyPhase1.route(ad)) return;
   if((ad==='shorts'&&!panelCaps.admin)||(ad==='sikayet'&&!panelCaps.moderator)){ location.hash='ozet'; return; }
   if(!['shorts','sikayet'].includes(ad)){location.hash='ozet';return;}
