@@ -117,14 +117,15 @@ video{width:220px;max-height:390px;background:#000;border-radius:10px}
     <a class="menu" href="#sikayet" data-sayfa="sikayet"><span>Şikayetler</span><span class="rozet sifir" id="r-sikayet">0</span></a>
     <a class="menu" href="#kullanici" data-sayfa="kullanici"><span>Kullanıcılar</span></a><a class="menu" href="#personel" data-sayfa="personel"><span>Personel ve yetki</span></a>
     <a class="menu" href="#kasa" data-sayfa="kasa" hidden><span>Kasa geçmişi</span></a>
-    <div class="alt"><div id="kim"></div><button id="btn-cikis">Çıkış</button></div>
+    <div id="approval-nav"></div><div class="alt"><div id="kim"></div><button id="btn-cikis">Çıkış</button></div>
   </nav>
   <main><header class="topbar" id="panel-topbar"></header><div class="workspace">
+    <div id="s-onay" class="hidden"></div>
     <div id="s-kasa" class="hidden"></div>
     <div id="s-ozet">
       <div class="ust"><h2>Onay bekleyenler</h2><button id="btn-yenile">Yenile</button></div>
       <div class="ozet" id="ozet-kutular"></div>
-      <p class="meta" style="margin-top:14px">Shorts ve şikayetler bu panelden; diğerleri şimdilik uygulamadaki yönetici panelinden yapılır.</p>
+      <p class="meta" style="margin-top:14px">Onaylar, sol menüdeki karar merkezinden incelenir.</p>
     </div>
 
     <div id="s-shorts" class="hidden">
@@ -161,6 +162,7 @@ video{width:220px;max-height:390px;background:#000;border-radius:10px}
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>
 <script src="phase2.js"></script>
 <script src="phase3.js"></script>
+<script src="approvals.js"></script>
 <script src="phase1.js"></script>
 <script>
 const SB_URL = 'https://rjdddbwotczhagdulwco.supabase.co';
@@ -273,6 +275,8 @@ $('#btn-cikis').onclick = cikis; $('#btn-cikis-giris').onclick = cikis;
 function sayfaGit(ad){
   if(!panelSession) return;
   ad = ad || 'ozet';
+  if(ad.startsWith('onay/')){PuffyPhase1.route(ad);if(PuffyApprovals.route(ad))return;}
+  if(ad==='canli-odalar'){PuffyApprovals.liveRooms();return;}
   if(PuffyPhase1.route(ad)) return;
   if((ad==='shorts'&&!panelCaps.admin)||(ad==='sikayet'&&!panelCaps.moderator)){ location.hash='ozet'; return; }
   if(!['shorts','sikayet'].includes(ad)){location.hash='ozet';return;}
@@ -288,12 +292,8 @@ $('#btn-yenile').onclick = ozetYukle;
 
 const OZET_AD = { short:'Shorts onayı', sikayet:'Şikayet', ajans_kurma:'Ajans kurma', ajans_logo:'Ajans logosu', etkinlik:'Etkinlik', oda_kapagi:'Oda kapağı', oda_temasi:'Oda teması', bayi_yukleme:'Bayi yükleme', para_cekme:'Para çekme' };
 const OZET_LINK = { short:'#shorts', sikayet:'#sikayet' };
-async function ozetYukle(){
-  if(!panelSession || !panelCaps.admin) return;
-  const {data,error}=await sb.rpc('onay_bekleyenler');
-  if(error || !panelSession) return;
-  rozet('r-short',data?.short);rozet('r-sikayet',data?.sikayet);
-}
+async function ozetYukle(){ if(panelSession)await PuffyApprovals.poll(); }
+
 function rozet(id, n){ const e=$('#'+id); n=Number(n||0); e.textContent=n; e.classList.toggle('sifir', n===0); }
 
 // ---------- SHORTS ----------
