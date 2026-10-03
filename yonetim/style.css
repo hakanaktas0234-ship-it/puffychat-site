@@ -47,3 +47,12 @@ a,button,[role=link]{cursor:pointer}.metric-link{position:relative;display:block
 .ayar-actions small{opacity:.7}
 @media(max-width:640px){.ayar-row{grid-template-columns:1fr}.ayar-row .ayar-meta{white-space:normal}}
 button.danger,.dialog-actions button.primary.danger{background:var(--red,#c0392b);border-color:var(--red,#c0392b);color:#fff}
+
+/* Özet: ajans/aile */
+.metric-link{text-decoration:none;color:inherit;display:block}.metric-link:hover{outline:1px solid var(--line,rgba(255,255,255,.15))}
+.metric-link small{display:block;opacity:.65;font-size:11px;margin-top:2px}
+.org-nums{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center;font-size:12px;opacity:.9;justify-content:flex-end}
+#topluluk-ozet .org-row{display:flex;justify-content:space-between;gap:12px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line,rgba(255,255,255,.08));text-decoration:none;color:inherit}
+#topluluk-ozet .org-row small{display:block;opacity:.65;font-size:12px}
+#topluluk-ozet h3{margin:14px 0 4px;font-size:13px;opacity:.8}
+@media(max-width:640px){#topluluk-ozet .org-row{flex-direction:column;align-items:flex-start}.org-nums{justify-content:flex-start}}
