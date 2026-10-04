@@ -28,7 +28,7 @@
  const ARAMA=[['yayinci_dk_coin','Görüntülü dakika (coin)'],['yayinci_sesli_dk_coin','Sesli dakika (coin)'],['dip_dk_coin','Call host olmayan görüntülü dakika (coin)'],['dip_sesli_dk_coin','Call host olmayan sesli dakika (coin)'],['yayinci_pay','Yayıncı payı (0.30 = %30)'],['ajans_pay','Ajans payı (0.10 = %10)'],['ucretsiz_sn','Ücretsiz saniye'],['min_dolar_puffy','Dolar talebi için en az Puffy'],['puffy_usd_1000','1.000 Puffy kaç $']];
  const HEDEF={herkes:'Herkes',vip:'VIP üyeler',ajans_sahipleri:'Ajans sahipleri',call_host:'Call Host\'lar',bayiler:'Bayiler'};
  function mount(id,title){const root=$('#s-ayarlar');document.querySelectorAll('.workspace > [id^="s-"]').forEach(e=>e.classList.toggle('hidden',e!==root));document.querySelectorAll('nav a.menu').forEach(a=>a.classList.toggle('aktif',a.dataset.sayfa===id));$('#uyg nav').classList.remove('open');$('#panel-topbar .mobile-menu')?.setAttribute('aria-expanded','false');$('#route-name').textContent=title;return root;}
- function init(c){stop();ctx=c;const host=$('#ayar-nav');host.innerHTML=(c.caps.owner||c.caps.super?'<a class="menu" href="#duyuru" data-sayfa="duyuru"><span>Duyuru gönder</span></a>':'')+(c.caps.owner?'<a class="menu" href="#muhasebe" data-sayfa="muhasebe"><span>Muhasebe</span></a><a class="menu" href="#ayarlar" data-sayfa="ayarlar"><span>Ayarlar</span></a>':'');}
+ function init(c){stop();ctx=c;const host=$('#ayar-nav');host.innerHTML=(c.caps.owner||c.caps.super?'<a class="menu" href="#duyuru" data-sayfa="duyuru"><span>Duyuru gönder</span></a>':'')+(c.caps.owner?'<a class="menu" href="#muhasebe" data-sayfa="muhasebe"><span>Muhasebe</span></a><a class="menu" href="#magaza" data-sayfa="magaza"><span>Mağaza stoğu</span></a><a class="menu" href="#ayarlar" data-sayfa="ayarlar"><span>Ayarlar</span></a>':'');}
  function stop(){seq++;ctx=null;$('#ayar-nav')?.replaceChildren();$('#s-ayarlar')?.replaceChildren();}
  function sebepDialog(title,body,onSubmit,submitLabel='Kaydet'){const dlg=document.createElement('dialog');dlg.className='phase2-dialog';dlg.setAttribute('aria-label',title);
   dlg.innerHTML=`<form><div class="eyebrow">AYARLAR</div><h2>${esc(title)}</h2>${body||''}<label>Değişiklik sebebi<textarea name="reason" required minlength="3" maxlength="300"></textarea></label><p class="danger-note">Onayladığında değişiklik anında uygulanır ve kütüğe yazılır.</p><div class="dialog-error" role="alert"></div><div class="dialog-actions"><button type="button" data-cancel>Vazgeç</button><button type="submit" class="primary">${esc(submitLabel)}</button></div></form>`;
@@ -98,6 +98,24 @@
     out.querySelector('[data-csv]').onclick=()=>csvIndir(d);out.querySelectorAll('[data-pusula]').forEach(b=>b.onclick=()=>pusulaAc(b.dataset.pusula));
    }catch(e){if(ctx===c&&n===seq)out.innerHTML=`<div class="empty-state" role="alert"><strong>Veri alınamadı</strong><p>${esc(c.errorText(e))}</p></div>`;}};
   form.onsubmit=e=>{e.preventDefault();getir();};getir();}
- function route(hash){const page=hash.split(/[/?]/)[0];if(page==='muhasebe'){muhasebe();return true;}if(page==='ayarlar'){ayarlar();return true;}if(page==='duyuru'){duyuru();return true;}seq++;return false;}
+ // MAĞAZA STOĞU — sınırlı Yoldaş parçacığı: fiyat, kişi hakkı, toplam stok, dönem.
+ async function magaza(){if(!ctx?.caps.owner){location.hash='ozet';return;}const c=ctx,n=++seq,root=mount('magaza','Mağaza stoğu');
+  root.innerHTML=`<div class="page-title"><div><div class="eyebrow">PLATFORM SAHİBİ</div><h1>Mağaza · Sınırlı ürünler</h1><p>Kişi başı hak ve herkes için toplam stok her dönem başında (İstanbul saatiyle hafta Pazartesi 00:00, gün gece yarısı) yenilenir.</p></div></div><div data-liste><div class="skeleton" role="status" aria-label="Yükleniyor"></div></div>`;
+  const out=root.querySelector('[data-liste]');
+  const ciz=liste=>{out.innerHTML=liste.length?liste.map(t=>`<section class="panel"><div class="page-title"><h3>${esc(t.ad)}</h3><span class="note">Bu dönem satılan: <strong>${esc(fmt(t.satilan))}</strong> / ${esc(fmt(t.toplam_stok))} · dönem sonu ${esc(new Date(t.donem_sonu).toLocaleString('tr-TR'))}</span></div>
+   <form class="ayar-grid" data-id="${esc(t.id)}">
+    <label>Ad<input name="ad" maxlength="80" value="${esc(t.ad)}"></label>
+    <label>Paketteki parçacık<input name="parcacik_adedi" type="number" min="1" max="1000" value="${esc(t.parcacik_adedi)}"></label>
+    <label>Fiyat (coin)<input name="fiyat_coin" type="number" min="1" value="${esc(t.fiyat_coin)}"></label>
+    <label>Kişi başı hak<input name="kisi_limiti" type="number" min="1" max="1000" value="${esc(t.kisi_limiti)}"></label>
+    <label>Toplam stok<input name="toplam_stok" type="number" min="1" value="${esc(t.toplam_stok)}"></label>
+    <label>Dönem<select name="donem"><option value="hafta" ${t.donem==='hafta'?'selected':''}>Haftalık</option><option value="gun" ${t.donem==='gun'?'selected':''}>Günlük</option></select></label>
+    <label>Satışta<select name="aktif"><option value="true" ${t.aktif?'selected':''}>Açık</option><option value="false" ${t.aktif?'':'selected'}>Kapalı</option></select></label>
+    <div class="ayar-actions"><button class="primary">Kaydet</button></div></form></section>`).join(''):'<p class="empty-state">Tanımlı sınırlı ürün yok.</p>';
+   out.querySelectorAll('form[data-id]').forEach(f=>f.onsubmit=async e=>{e.preventDefault();const d=new FormData(f);const veri={ad:String(d.get('ad')||'').trim(),parcacik_adedi:Number(d.get('parcacik_adedi')),fiyat_coin:Number(d.get('fiyat_coin')),kisi_limiti:Number(d.get('kisi_limiti')),toplam_stok:Number(d.get('toplam_stok')),donem:String(d.get('donem')),aktif:d.get('aktif')==='true'};
+    if(!confirm(`${veri.ad}: ${fmt(veri.parcacik_adedi)} parçacık · ${fmt(veri.fiyat_coin)} coin · kişi başı ${fmt(veri.kisi_limiti)} · toplam ${fmt(veri.toplam_stok)} · ${veri.donem==='gun'?'günlük':'haftalık'} · ${veri.aktif?'satışta':'kapalı'}. Kaydedilsin mi?`))return;
+    const b=f.querySelector('button');b.disabled=true;try{const yeni=await c.rpc('yonetim_magaza_sinirli_kaydet',{p_id:f.dataset.id,p_veri:veri});if(ctx===c&&n===seq){ciz(yeni);c.toast('Kaydedildi.');}}catch(err){c.toast(c.errorText(err));b.disabled=false;}});};
+  try{const liste=await c.rpc('yonetim_magaza_sinirli_liste',{});if(ctx===c&&n===seq)ciz(liste||[]);}catch(e){if(ctx===c&&n===seq)out.innerHTML=`<div class="empty-state" role="alert"><strong>Veri alınamadı</strong><p>${esc(c.errorText(e))}</p></div>`;}}
+ function route(hash){const page=hash.split(/[/?]/)[0];if(page==='muhasebe'){muhasebe();return true;}if(page==='magaza'){magaza();return true;}if(page==='ayarlar'){ayarlar();return true;}if(page==='duyuru'){duyuru();return true;}seq++;return false;}
  window.PuffyAyarlar={init,stop,route};
 })();
