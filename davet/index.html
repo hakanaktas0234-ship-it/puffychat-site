@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Puffy'ye davetlisin</title>
+<meta name="description" content="Arkadaşın seni Puffy'ye davet etti. Davet koduyla katıl, ilk yüklemende hediye coin kazan.">
+<meta property="og:title" content="Puffy'ye davetlisin">
+<meta property="og:description" content="Davet koduyla katıl, ilk yüklemende hediye coin kazan.">
+<meta property="og:image" content="https://puffychat.com/davet/banner.webp">
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Inter:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="/style.css">
+<style>
+  .afis { width:100%; aspect-ratio:3/1; border-radius:18px; overflow:hidden; position:relative;
+          background:#0a0c11 url('/davet/banner.webp') right center/cover no-repeat;
+          border:1px solid var(--altin-koyu); margin:8px 0 22px; }
+  .afis .yazi { position:absolute; left:6%; top:50%; transform:translateY(-50%); max-width:52%; }
+  .afis h1 { margin:0; font-size:clamp(22px,5vw,40px); color:#ECE1C8; text-shadow:0 2px 8px #000; }
+  .afis p { margin:6px 0 0; color:#E89157; font-weight:600; font-size:clamp(12px,2.4vw,18px); }
+  .kod-kutu { border:1px solid var(--altin-koyu); background:var(--panel-ust); border-radius:16px;
+              padding:18px; text-align:center; margin:0 0 20px; }
+  .kod-kutu small { color:var(--solgun); display:block; margin-bottom:6px; }
+  .kod { font-size:40px; font-weight:600; letter-spacing:4px; color:#ECE1C8; }
+  .kopyala { margin-top:12px; display:inline-block; font-size:16px; padding:12px 22px; cursor:pointer; }
+  ol.adim { padding-left:20px; } ol.adim li { margin:10px 0; }
+  .not { color:var(--solgun); font-size:14px; }
+</style>
+</head>
+<body>
+<header class="ust"><div class="kabuk">
+  <a class="marka" href="/">Puffy<span>.</span></a>
+  <nav><a href="/destek/">Destek</a><a href="/gizlilik/">Gizlilik</a></nav>
+</div></header>
+<main><div class="kabuk">
+  <div class="afis"><div class="yazi">
+    <h1>Puffy'ye davetlisin</h1>
+    <p>İlk yüklemende %10 hediye coin</p>
+  </div></div>
+
+  <div class="kod-kutu" id="kodKutu">
+    <small>Arkadaşının davet kodu</small>
+    <div class="kod" id="kod">—</div>
+    <a class="dugme kopyala" id="kopyala">Kodu kopyala</a>
+  </div>
+
+  <a class="dugme" style="display:block;text-align:center;font-size:18px;padding:15px 22px" href="/indir/">Puffy'yi indir</a>
+
+  <h2>Nasıl katılırım?</h2>
+  <ol class="adim">
+    <li>Puffy'yi indir ve hesabını aç.</li>
+    <li>Hesabını açtıktan sonraki <strong>7 gün içinde</strong> Profil › <strong>Davet Et, Kazan</strong> › <strong>Kod gir</strong>'e dokun.</li>
+    <li>Yukarıdaki kodu yapıştır. İlk coin yüklemende <strong>%10 ekstra coin</strong> (en çok 20.000) hesabına eklenir.</li>
+  </ol>
+  <p class="not">Arkadaşın da sen yükleme yaptıkça 90 gün boyunca küçük bir pay kazanır. Davet kodu bir kez girilir ve değiştirilemez.</p>
+
+  <h2>Sorun mu var?</h2>
+  <p><a class="eposta" href="mailto:destek@puffychat.com">destek@puffychat.com</a></p>
+</div></main>
+<footer><div class="kabuk">
+  <nav><a href="/">Ana sayfa</a><a href="/destek/">Destek</a><a href="/gizlilik/">Gizlilik Politikası</a><a href="/kullanim-sartlari/">Kullanım Şartları</a></nav>
+  <p>&copy; 2026 DRG Dijital Teknoloji Hizmetleri Limited Şirketi · Puffy</p>
+</div></footer>
+<script>
+(function(){
+  var k = new URLSearchParams(location.search).get('k') || '';
+  k = k.replace(/[^0-9A-Za-z_.-]/g, '').slice(0, 32);
+  var el = document.getElementById('kod'), b = document.getElementById('kopyala');
+  if (!k) { document.getElementById('kodKutu').style.display = 'none'; return; }
+  el.textContent = k;
+  b.addEventListener('click', function(){
+    var bitti = function(){ b.textContent = 'Kopyalandı ✓'; };
+    if (navigator.clipboard) { navigator.clipboard.writeText(k).then(bitti, bitti); }
+    else { var t=document.createElement('textarea'); t.value=k; document.body.appendChild(t); t.select(); try{document.execCommand('copy');}catch(e){} t.remove(); bitti(); }
+  });
+})();
+</script>
+</body>
+</html>
