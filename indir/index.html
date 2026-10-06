@@ -37,10 +37,10 @@
     <h1>Puffy'yi indir</h1>
     <p>Android için doğrudan kurulum dosyası. Tek dokunuşla iner, kurulumu sen onaylarsın.</p>
     <a id="indirDugme" class="dugme indir-dugme" href="https://rjdddbwotczhagdulwco.supabase.co/storage/v1/object/public/indir/Puffy.apk?download=Puffy.apk">Puffy.apk indir</a>
-    <p class="not">Dosya yaklaşık 1,2 GB — Wi-Fi'de indirmeni öneririz. Android 7.0 ve üzeri.</p>
+    <p class="not" id="dosyaNot">Dosya yaklaşık 530 MB — Wi-Fi'de indirmeni öneririz. Android 7.0 ve üzeri.</p>
     <div id="panel" class="panel" aria-live="polite">
       <h3><span class="nabiz"></span>İndirme başladı</h3>
-      <p class="not" style="margin:0">Dosya arka planda iniyor. Wi-Fi'de yaklaşık 3–8 dakika sürer; bu sayfayı kapatabilirsin.</p>
+      <p class="not" style="margin:0">Dosya arka planda iniyor. Wi-Fi'de birkaç dakika sürer; bu sayfayı kapatabilirsin.</p>
       <ol>
         <li>İlerlemeyi görmek için ekranın üstünden <strong>bildirim çubuğunu aşağı çek</strong>; "Puffy.apk" satırında yüzde yazar.</li>
         <li>Yüzde 100 olunca o bildirime dokun.</li>
@@ -79,6 +79,17 @@
   function basla(){ p.classList.add('acik'); d.classList.add('basildi'); d.textContent='İndiriliyor…'; p.scrollIntoView({behavior:'smooth',block:'nearest'}); }
   d.addEventListener('click', function(){ setTimeout(basla, 300); });
   r.addEventListener('click', function(e){ e.preventDefault(); d.classList.remove('basildi'); d.textContent='Puffy.apk indir'; window.location.href=d.href; setTimeout(basla,300); });
+
+  // Dosya boyutu ve sürüm: sabit metin yerine depodan okunur (okunamazsa yukarıdaki metin kalır).
+  var n=document.getElementById('dosyaNot'), apk=d.href.split('?')[0], surum='';
+  function yaz(mb){ n.textContent='Dosya '+(mb?'yaklaşık '+mb+' MB':'yaklaşık 530 MB')+(surum?' (sürüm '+surum+')':'')+" — Wi-Fi'de indirmeni öneririz. Android 7.0 ve üzeri."; }
+  fetch(apk.replace('/Puffy.apk','/surum.json'),{cache:'no-store'}).then(function(c){return c.ok?c.json():null;}).then(function(j){
+    if(j&&j.surumAdi){ surum=j.surumAdi; yaz(); }
+  }).catch(function(){});
+  fetch(apk,{method:'HEAD',cache:'no-store'}).then(function(c){
+    var b=parseInt(c.headers.get('content-length')||'0',10);
+    if(b>0){ yaz(Math.round(b/1048576)); }
+  }).catch(function(){});
 })();
 </script>
 </body>
