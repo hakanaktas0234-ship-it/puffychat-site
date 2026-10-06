@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.drgdijital.puffy",
+      "sha256_cert_fingerprints": [
+        "9A:28:2A:D8:D7:AD:D9:52:4A:73:78:5A:27:09:92:B3:03:7D:AE:4F:CC:5F:8A:26:44:D2:2F:93:08:3E:AF:BA"
+      ]
+    }
+  }
+]
