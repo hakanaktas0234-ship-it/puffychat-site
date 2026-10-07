@@ -56,3 +56,6 @@ button.danger,.dialog-actions button.primary.danger{background:var(--red,#c0392b
 #topluluk-ozet .org-row small{display:block;opacity:.65;font-size:12px}
 #topluluk-ozet h3{margin:14px 0 4px;font-size:13px;opacity:.8}
 @media(max-width:640px){#topluluk-ozet .org-row{flex-direction:column;align-items:flex-start}.org-nums{justify-content:flex-start}}
+
+/* Oyun kasası (2026-10-07) */
+.metric.uyari strong{color:#d9822b}.rozet.uyari{background:#d9822b;color:#fff}tr.risk td{background:rgba(217,130,43,.08)}

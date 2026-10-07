@@ -123,6 +123,7 @@ button.daha{display:block;width:100%;margin:10px 0;padding:10px;border-radius:10
     <a class="menu" href="#oda-gozlem" data-sayfa="oda-gozlem" hidden><span>Canlı odalar / kişiler</span></a>
     <a class="menu" href="#call-host" data-sayfa="call-host" hidden><span>Call Host aktifliği</span></a>
     <a class="menu" href="#kasa" data-sayfa="kasa" hidden><span>Kasa geçmişi</span></a>
+    <a class="menu" href="#oyun-kasasi" data-sayfa="oyun-kasasi" hidden><span>Oyun kasası</span></a>
     <div id="approval-nav"></div><div id="hediye-nav"></div><div id="ayar-nav"></div><div class="alt"><div id="kim"></div><button id="btn-cikis">Çıkış</button></div>
   </nav>
   <main><header class="topbar" id="panel-topbar"></header><div class="workspace">
@@ -132,6 +133,7 @@ button.daha{display:block;width:100%;margin:10px 0;padding:10px;border-radius:10
     <div id="s-topluluk" class="hidden"></div>
     <div id="s-onay" class="hidden"></div>
     <div id="s-kasa" class="hidden"></div>
+    <div id="s-oyunlar" class="hidden"></div>
     <div id="s-ozet">
       <div class="ust"><h2>Onay bekleyenler</h2><button id="btn-yenile">Yenile</button></div>
       <div class="ozet" id="ozet-kutular"></div>
@@ -176,6 +178,7 @@ button.daha{display:block;width:100%;margin:10px 0;padding:10px;border-radius:10
 <script src="icerik.js"></script>
 <script src="topluluklar.js"></script>
 <script src="gozlem.js"></script>
+<script src="oyunlar.js"></script>
 <script src="hediyeler.js"></script>
 <script src="ayarlar.js?v=20261004m"></script>
 <script src="phase1.js?v=20261004b"></script>
@@ -320,6 +323,7 @@ function sayfaGit(ad){
   if(window.PuffyHediyeler&&PuffyHediyeler.route(ad)){PuffyPhase1.route(ad);return;}
   if(window.PuffyAyarlar&&PuffyAyarlar.route(ad)){PuffyPhase1.route(ad);return;}
   if(window.PuffyGozlem&&PuffyGozlem.route(ad)){PuffyPhase1.route(ad);return;}
+  if(window.PuffyOyunlar&&PuffyOyunlar.route(ad)){PuffyPhase1.route(ad);return;}
   if(window.PuffyTopluluk&&PuffyTopluluk.route(ad)){PuffyPhase1.route(ad);return;}
   if(ad.startsWith('onay/')){PuffyPhase1.route(ad);if(PuffyApprovals.route(ad))return;}
   if(ad==='canli-odalar'){PuffyApprovals.liveRooms();return;}

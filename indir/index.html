@@ -78,13 +78,24 @@
   var d=document.getElementById('indirDugme'), p=document.getElementById('panel'), r=document.getElementById('tekrar');
   function basla(){ p.classList.add('acik'); d.classList.add('basildi'); d.textContent='İndiriliyor…'; p.scrollIntoView({behavior:'smooth',block:'nearest'}); }
   d.addEventListener('click', function(){ setTimeout(basla, 300); });
-  r.addEventListener('click', function(e){ e.preventDefault(); d.classList.remove('basildi'); d.textContent='Puffy.apk indir'; window.location.href=d.href; setTimeout(basla,300); });
+  r.addEventListener('click', function(e){ e.preventDefault(); d.classList.remove('basildi'); d.textContent=guncelleModu?'Güncellemeyi indir':'Puffy.apk indir'; window.location.href=d.href; setTimeout(basla,300); });
 
   // Dosya boyutu ve sürüm: sabit metin yerine depodan okunur (okunamazsa yukarıdaki metin kalır).
   var n=document.getElementById('dosyaNot'), apk=d.href.split('?')[0], surum='';
   function yaz(mb){ n.textContent='Dosya '+(mb?'yaklaşık '+mb+' MB':'yaklaşık 530 MB')+(surum?' (sürüm '+surum+')':'')+" — Wi-Fi'de indirmeni öneririz. Android 7.0 ve üzeri."; }
+  // Uygulamadan "GÜNCELLE" ile gelindiyse (?guncelle=<mevcut sürüm kodu>) sayfa güncelleme diliyle konuşur.
+  var mevcut=parseInt(new URLSearchParams(location.search).get('guncelle')||'0',10), guncelleModu=mevcut>0;
+  if(guncelleModu){
+    document.title="Puffy'yi güncelle — Android";
+    document.querySelector('h1').textContent="Puffy'yi güncelle";
+    document.querySelector('h1+p').textContent='Yeni sürüm hazır. İndirip mevcut uygulamanın üstüne kur; hesabın ve verilerin kalır.';
+    d.textContent='Güncellemeyi indir';
+    var adim3=document.querySelector('ol.adim li:nth-child(3)'); if(adim3) adim3.innerHTML='Telefon <b>Güncelle</b> derse dokun, bitince <b>Aç</b>. Hesabın ve coinlerin yerinde kalır.';
+  }
   fetch(apk.replace('/Puffy.apk','/surum.json'),{cache:'no-store'}).then(function(c){return c.ok?c.json():null;}).then(function(j){
-    if(j&&j.surumAdi){ surum=j.surumAdi; yaz(); }
+    if(j&&j.surumAdi){ surum=j.surumAdi; yaz();
+      if(guncelleModu&&j.surumKodu){ d.textContent='Güncellemeyi indir · '+j.surumAdi+' ('+mevcut+' → '+j.surumKodu+')';
+        if(j.surumKodu<=mevcut){ d.textContent='Sürümün güncel ('+j.surumAdi+')'; document.querySelector('h1+p').textContent='Zaten en yeni sürümü kullanıyorsun; yine de indirip üstüne kurabilirsin.'; } } }
   }).catch(function(){});
   fetch(apk,{method:'HEAD',cache:'no-store'}).then(function(c){
     var b=parseInt(c.headers.get('content-length')||'0',10);
