@@ -65,6 +65,7 @@ video{width:220px;max-height:390px;background:#000;border-radius:10px}
 .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--panel2);border:1px solid var(--gold);color:var(--cream);padding:10px 16px;border-radius:12px;opacity:0;transition:.25s;pointer-events:none;z-index:9}
 .toast.acik{opacity:1}
 @media (max-width:760px){#uyg{grid-template-columns:1fr}nav{position:static;height:auto;display:flex;flex-wrap:wrap;gap:4px;align-items:center}nav .marka{width:100%;padding-bottom:8px}nav a.menu{margin:0}nav .alt{position:static;width:100%}main{padding:16px}}
+button.daha{display:block;width:100%;margin:10px 0;padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.05);color:inherit;cursor:pointer}
 </style>
 <link rel="stylesheet" href="style.css">
 </head>
@@ -343,14 +344,17 @@ async function ozetYukle(){ if(panelSession)await PuffyApprovals.poll(); }
 function rozet(id, n){ const e=$('#'+id); n=Number(n||0); e.textContent=n; e.classList.toggle('sifir', n===0); }
 
 // ---------- SHORTS ----------
-$('#btn-shorts-yenile').onclick = shortsYukle;
-async function shortsYukle(){
-  const l=$('#shorts-liste'); l.innerHTML='<div class="bos">Yükleniyor…</div>';
-  const { data, error } = await sb.rpc('shorts_onay_kuyrugu', { p_limit: 100 });
-  if(error){ l.innerHTML=`<div class="bos">${esc(mesaj(error))}</div>`; return; }
-  if(!data?.length){ l.innerHTML='<div class="bos">Bekleyen video yok.</div>'; rozet('r-short',0); return; }
-  rozet('r-short', data[0].bekleyen_toplam);
-  l.innerHTML='';
+$('#btn-shorts-yenile').onclick = ()=>shortsYukle();
+const SAYFA=25; let shortsOffset=0;
+async function shortsYukle(devam){
+  const l=$('#shorts-liste'); if(!devam){ shortsOffset=0; l.innerHTML='<div class="bos">Yükleniyor…</div>'; }
+  l.querySelector('.daha')?.remove();
+  // O05: 100 kayıt sınırı yerine 25'lik sayfalar; "Daha fazla" ile kuyruğun sonuna kadar gidilir.
+  const { data, error } = await sb.rpc('shorts_onay_kuyrugu', { p_limit: SAYFA, p_offset: shortsOffset });
+  if(error){ if(!devam) l.innerHTML=`<div class="bos">${esc(mesaj(error))}</div>`; else toast(mesaj(error)); return; }
+  if(!devam) l.innerHTML='';
+  if(!data?.length){ if(!devam){ l.innerHTML='<div class="bos">Bekleyen video yok.</div>'; rozet('r-short',0); } return; }
+  const toplam=Number(data[0].bekleyen_toplam||0); rozet('r-short', toplam); shortsOffset+=data.length;
   for(const s of data){
     const d=document.createElement('div'); d.className='kutu';
     const tags=(s.hashtags||[]).map(h=>'#'+esc(h)).join(' ');
@@ -369,6 +373,8 @@ async function shortsYukle(){
     d.querySelectorAll('button[data-onay]').forEach(b=>b.onclick=()=>shortKarar(s, b.dataset.onay==='1', d));
     l.appendChild(d);
   }
+  if(shortsOffset<toplam){ const b=document.createElement('button'); b.className='daha'; b.textContent=`Daha fazla (${shortsOffset} / ${toplam})`; b.onclick=()=>shortsYukle(true); l.appendChild(b); }
+  else { const n=document.createElement('div'); n.className='bos daha'; n.textContent=`Hepsi listelendi (${toplam}).`; l.appendChild(n); }
 }
 async function shortKarar(s, onay, kart){
   let sebep=null;
@@ -382,19 +388,22 @@ async function shortKarar(s, onay, kart){
   }
   toast(onay?'Video onaylandı, akışa girdi.':'Video reddedildi.');
   kart.remove(); ozetYukle();
-  if(!$('#shorts-liste').children.length) $('#shorts-liste').innerHTML='<div class="bos">Bekleyen video yok.</div>';
+  if(!$('#shorts-liste').querySelector('.kutu')) shortsYukle(); // sayfa boşaldı: sıradakileri getir (yoksa 'Bekleyen video yok')
 }
 
 // ---------- ŞİKAYETLER ----------
 let sikayetTur='kullanici';
 $('#sikayet-sekmeler').querySelectorAll('button').forEach(b=>b.onclick=()=>{ sikayetTur=b.dataset.tur; $('#sikayet-sekmeler').querySelectorAll('button').forEach(x=>x.classList.toggle('aktif',x===b)); sikayetYukle(); });
 const SEBEP = { child_safety:'Çocuk güvenliği', harassment:'Taciz', spam:'Spam', nudity:'Müstehcenlik', violence:'Şiddet', hate:'Nefret söylemi', scam:'Dolandırıcılık', other:'Diğer' };
-async function sikayetYukle(){
-  const l=$('#sikayet-liste'); l.innerHTML='<div class="bos">Yükleniyor…</div>';
-  const { data, error } = await sb.rpc('moderator_sikayet_kuyrugu', { p_tur:sikayetTur, p_limit:100, p_offset:0 });
-  if(error){ l.innerHTML=`<div class="bos">${esc(mesaj(error))}</div>`; return; }
-  if(!data?.length){ l.innerHTML='<div class="bos">Bu türde şikayet yok.</div>'; return; }
-  l.innerHTML='';
+let sikayetOffset=0;
+async function sikayetYukle(devam){
+  const l=$('#sikayet-liste'); if(!devam){ sikayetOffset=0; l.innerHTML='<div class="bos">Yükleniyor…</div>'; }
+  l.querySelector('.daha')?.remove();
+  const { data, error } = await sb.rpc('moderator_sikayet_kuyrugu', { p_tur:sikayetTur, p_limit:SAYFA, p_offset:sikayetOffset });
+  if(error){ if(!devam) l.innerHTML=`<div class="bos">${esc(mesaj(error))}</div>`; else toast(mesaj(error)); return; }
+  if(!devam) l.innerHTML='';
+  if(!data?.length){ if(!devam) l.innerHTML='<div class="bos">Bu türde şikayet yok.</div>'; return; }
+  const sToplam=Number(data[0].toplam||0); sikayetOffset+=data.length;
   for(const r of data){
     const d=document.createElement('div'); d.className='kutu';
     const kaldirilabilir = ['short','moment','short_comment'].includes(r.icerik_turu);
@@ -415,6 +424,8 @@ async function sikayetYukle(){
     const b=d.querySelector('[data-i=ban]'); if(b) b.onclick=()=>banla(r.hedef_id, r.hedef_ad);
     l.appendChild(d);
   }
+  if(sikayetOffset<sToplam){ const b=document.createElement('button'); b.className='daha'; b.textContent=`Daha fazla (${sikayetOffset} / ${sToplam})`; b.onclick=()=>sikayetYukle(true); l.appendChild(b); }
+  else { const n=document.createElement('div'); n.className='bos daha'; n.textContent=`Hepsi listelendi (${sToplam}).`; l.appendChild(n); }
 }
 
 async function banla(userId, ad, sonra){
