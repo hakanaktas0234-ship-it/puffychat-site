@@ -87,7 +87,7 @@
   <tr><td>TCMB döviz alış kuru (${e(kurTarih)} · bülten ${e(p.tcmb_bulten_no||'—')})</td><td class="r">${Number(p.tcmb_kur).toLocaleString('tr-TR',{minimumFractionDigits:4,maximumFractionDigits:4})} TL</td></tr>
   <tr><td>Brüt tutar</td><td class="r">${tl(p.brut_tl)} TL</td></tr>
   <tr><td>Gelir vergisi stopajı (%${tl(Number(p.stopaj_orani)*100)})</td><td class="r">−${tl(p.stopaj_tl)} TL</td></tr>
-  <tr class="net"><td>Ödenen net tutar</td><td class="r">${tl(p.net_tl)} TL</td></tr></tbody></table>
+  <tr class="net"><td>Onaylanan net tutar</td><td class="r">${tl(p.net_tl)} TL</td></tr></tbody></table>
   <div class="imza"><div>Düzenleyen<br>${e(f.unvan)}</div><div>İşi yapan<br>${e(k.ad_soyad)}</div></div>
   <p class="not">Kesilen stopaj, düzenleyen tarafından işi yapan adına muhtasar beyanname ile vergi dairesine beyan edilir ve ödenir.</p></body></html>`;}
  async function pusulaAc(id){const w=window.open('','_blank');if(!w){ctx.toast('Açılır pencereye izin ver.');return;}w.document.write('<p style="font-family:Arial">Yükleniyor…</p>');try{const p=await ctx.rpc('gider_pusulasi',{p_id:id});w.document.open();w.document.write(pusulaHtml(p));w.document.close();}catch(e){w.document.body.textContent='Pusula alınamadı: '+ctx.errorText(e);}}
@@ -103,7 +103,7 @@
   const getir=async()=>{const f=new FormData(form),yil=Number(f.get('yil')),ay=Number(f.get('ay'));out.innerHTML='<div class="skeleton" role="status" aria-label="Yükleniyor"></div>';
    try{const d=await c.rpc('stopaj_aylik_liste',{p_yil:yil,p_ay:ay});if(ctx!==c||n!==seq)return;const t=d.toplam||{};
     out.innerHTML=`<section class="panel"><div class="page-title"><h3>${esc(AYLAR[ay-1])} ${esc(yil)} · ${esc(fmt(t.adet))} pusula</h3><button data-csv ${t.adet?'':'disabled'}>Excel (CSV) indir</button></div>
-    <div class="metrics">${[['Brüt',tl(t.brut_tl)+' TL'],['Stopaj',tl(t.stopaj_tl)+' TL'],['Net ödenen',tl(t.net_tl)+' TL'],['USD',tl(t.usd)+' $']].map(([a,b])=>`<div><span>${esc(a)}</span><strong>${esc(b)}</strong></div>`).join('')}</div>
+    <div class="metrics">${[['Brüt',tl(t.brut_tl)+' TL'],['Stopaj',tl(t.stopaj_tl)+' TL'],['Onaylanan net',tl(t.net_tl)+' TL'],['Banka ödemesi doğrulanan net',tl(t.odenen_net_tl)+' TL'],['USD',tl(t.usd)+' $']].map(([a,b])=>`<div><span>${esc(a)}</span><strong>${esc(b)}</strong></div>`).join('')}</div>
     ${t.adet?`<div class="table-wrap"><table class="data-table responsive"><thead><tr><th>Seri No</th><th>Tarih</th><th>Ad Soyad</th><th>TC</th><th>Brüt TL</th><th>Stopaj TL</th><th>Net TL</th><th></th></tr></thead><tbody>${d.satirlar.map(r=>`<tr><td data-label="Seri No"><strong>${esc(r.seri_no)}</strong></td><td data-label="Tarih">${esc(r.tarih)}</td><td data-label="Ad Soyad">${esc(r.ad_soyad)}</td><td data-label="TC">${esc(r.tc)}</td><td data-label="Brüt">${esc(tl(r.brut_tl))}</td><td data-label="Stopaj">${esc(tl(r.stopaj_tl))}</td><td data-label="Net">${esc(tl(r.net_tl))}</td><td><button data-pusula="${esc(r.id)}">Pusula</button></td></tr>`).join('')}</tbody></table></div>`:'<p class="empty-state">Bu ay onaylanmış ödeme yok.</p>'}</section>`;
     out.querySelector('[data-csv]').onclick=()=>csvIndir(d);out.querySelectorAll('[data-pusula]').forEach(b=>b.onclick=()=>pusulaAc(b.dataset.pusula));
    }catch(e){if(ctx===c&&n===seq)out.innerHTML=`<div class="empty-state" role="alert"><strong>Veri alınamadı</strong><p>${esc(c.errorText(e))}</p></div>`;}};
