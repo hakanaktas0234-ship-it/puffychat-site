@@ -5,8 +5,8 @@
  const superKeys=['role','displayId','displayIdRestore','dealer','specialId','specialIdRemove','kycApprove','kycReject','agencyExit','familyExit','host','hostPhoto','deletion'];
  const ownerKeys=['diamonds','freeze','vipAdjust','vipRemoveAll'];
  const sections={gifts:'Hediyeler',rooms:'Odalar',reports:'Şikayetler',operations:'Hesap kontrolü',host:'Call Host',logins:'Giriş geçmişi',cash:'Kasa geçmişi'};
- function tabs(ctx){return Object.fromEntries(Object.entries(sections).filter(([k])=>!['operations','host','logins','cash'].includes(k)||(k==='cash'?ctx.caps.owner:ctx.caps.super||ctx.caps.owner)));}
- function allowed(key,ctx){return ctx.profile.id!==ctx.user.id&&(!ctx.profile.muaf||ctx.caps.owner)&&(ownerKeys.includes(key)?ctx.caps.owner:ctx.caps.super||ctx.caps.owner);}
+ function tabs(ctx){return Object.fromEntries(Object.entries(sections).filter(([k])=>!['operations','host','logins','cash'].includes(k)||(k==='cash'?ctx.caps.owner:ctx.caps.actions?.account_manage===true)));}
+ function allowed(key,ctx){return ctx.profile.id!==ctx.user.id&&(!ctx.profile.muaf||ctx.caps.owner)&&(ownerKeys.includes(key)?ctx.caps.owner:ctx.caps.actions?.account_manage===true);}
  function buttons(ctx){return '<h3>Hesap yönetimi</h3>'+superKeys.filter(k=>allowed(k,ctx)).map(k=>`<button data-action="${k}">${labels[k]}</button>`).join('')+(ctx.caps.owner?'<h3>Kasa kontrolleri</h3>'+ownerKeys.filter(k=>allowed(k,ctx)).map(k=>`<button data-action="${k}">${labels[k]}</button>`).join(''):'');}
  const field=(name,label,attrs='')=>`<label>${label}<input name="${name}" ${attrs}></label>`;
  const choice=(name,label,values)=>`<label for="phase3-${name}">${label}</label><select id="phase3-${name}" name="${name}">${values.map(([v,t])=>`<option value="${v}">${t}</option>`).join('')}</select>`;
