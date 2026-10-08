@@ -1,0 +1,4 @@
+const {test}=require('node:test');const assert=require('node:assert/strict');const vm=require('node:vm');const fs=require('node:fs');const path=require('node:path');
+const window={};vm.runInNewContext(fs.readFileSync(path.join(__dirname,'../../yonetim/kapsam.js'),'utf8'),{window});
+test('Finans geçmişi 50 kayıt ötesine gider, kullanıcı ve işlem filtresi taşınır',()=>{const p=window.PuffyKapsam.financeParams('user','transactions',{search:'old-id',type:'mahzen_odul'},3);assert.equal(p.p_offset,75);assert.equal(p.p_user,'user');assert.equal(p.p_arama,'old-id');assert.equal(p.p_islem,'mahzen_odul');});
+test('Dahil bitiş tarihi ertesi gün açık sınıra dönüşür',()=>{const p=window.PuffyKapsam.financeParams('u','purchases',{start:'2026-10-01',end:'2026-10-08'},0);assert.equal(p.p_baslangic,'2026-10-01T00:00:00Z');assert.equal(p.p_bitis,'2026-10-09T00:00:00.000Z');});
