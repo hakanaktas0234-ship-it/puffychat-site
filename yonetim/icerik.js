@@ -54,10 +54,10 @@
 
   function sil(r){
     const c=ctx,dlg=document.createElement('dialog');
-    dlg.innerHTML=`<h2>Banner silinsin mi?</h2><p>“${c.esc(r.baslik||'Başlıksız')}” ana sayfadan kaldırılır ve görseli silinir. Bu işlem geri alınamaz; geçici olarak kaldırmak için “Gizle”yi kullanabilirsin.</p><div class="dialog-error" role="alert"></div><div class="dialog-actions"><button data-vazgec>Vazgeç</button><button data-onay class="tehlike">Sil</button></div>`;
+    dlg.innerHTML=`<h2>Banner silinsin mi?</h2><p>“${c.esc(r.baslik||'Başlıksız')}” ana sayfadan kaldırılır; görseli kalıcı temizlik kuyruğunda silinir. Bu işlem geri alınamaz; geçici olarak kaldırmak için “Gizle”yi kullanabilirsin.</p><div class="dialog-error" role="alert"></div><div class="dialog-actions"><button data-vazgec>Vazgeç</button><button data-onay class="tehlike">Sil</button></div>`;
     document.body.appendChild(dlg);dlg.showModal();dlg.addEventListener('close',()=>dlg.remove());
     dlg.querySelector('[data-vazgec]').onclick=()=>dlg.close();
-    dlg.querySelector('[data-onay]').onclick=async()=>{dlg.querySelectorAll('button').forEach(b=>b.disabled=true);try{const out=await c.rpc('ana_banner_sil',{p_id:r.id});const yol=(out&&out.gorsel_path||'').replace(/^media-assets\//,'');if(yol)await c.sb.storage.from('media-assets').remove([yol]);dlg.close();c.toast('Banner silindi.');bannerlar()}catch(e){dlg.querySelector('.dialog-error').textContent=hata(e);dlg.querySelectorAll('button').forEach(b=>b.disabled=false)}};
+    dlg.querySelector('[data-onay]').onclick=async()=>{dlg.querySelectorAll('button').forEach(b=>b.disabled=true);try{const out=await c.rpc('ana_banner_sil',{p_id:r.id});dlg.close();c.toast('Banner kaldırıldı. Medya temizliği kalıcı kuyruktan izlenir.');bannerlar()}catch(e){dlg.querySelector('.dialog-error').textContent=hata(e);dlg.querySelectorAll('button').forEach(b=>b.disabled=false)}};
   }
 
   function duzenle(r){

@@ -169,24 +169,25 @@ button.daha{display:block;width:100%;margin:10px 0;padding:10px;border-radius:10
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="vendor/supabase-2.57.4.min.js" integrity="sha384-AkNSQdptcXlJ0/NBZc4qGk86cDVXcCevwoWgEKIpHOEfbvlXGLlIkimQtONt8KNf"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>
-<script src="phase2.js"></script>
-<script src="phase3.js"></script>
-<script src="moderasyon.js"></script>
-<script src="odemeler.js"></script>
-<script src="approvals.js?v=20261004m"></script>
-<script src="icerik.js"></script>
-<script src="topluluklar.js"></script>
-<script src="gozlem.js"></script>
-<script src="oyunlar.js"></script>
-<script src="hediyeler.js"></script>
-<script src="oyun-ayari.js"></script>
-<script src="ayarlar.js?v=20261008phase0"></script>
-<script src="finans-istek.js"></script>
-<script src="kapsam.js?v=20261008phase5"></script>
-<script src="phase1.js?v=20261008phase1"></script>
+<script src="guvenilirlik.js?v=20261008audit6"></script>
+<script src="phase2.js?v=20261008audit6"></script>
+<script src="phase3.js?v=20261008audit6"></script>
+<script src="moderasyon.js?v=20261008audit6"></script>
+<script src="odemeler.js?v=20261008audit6"></script>
+<script src="approvals.js?v=20261008audit6"></script>
+<script src="icerik.js?v=20261008audit6"></script>
+<script src="topluluklar.js?v=20261008audit6"></script>
+<script src="gozlem.js?v=20261008audit6"></script>
+<script src="oyunlar.js?v=20261008audit6"></script>
+<script src="hediyeler.js?v=20261008audit6"></script>
+<script src="oyun-ayari.js?v=20261008audit6"></script>
+<script src="ayarlar.js?v=20261008audit6"></script>
+<script src="finans-istek.js?v=20261008audit6"></script>
+<script src="kapsam.js?v=20261008audit6"></script>
+<script src="phase1.js?v=20261008audit6"></script>
 <script>
 const SB_URL = 'https://rjdddbwotczhagdulwco.supabase.co';
 const SB_KEY = 'sb_publishable_TMb-Ldq66Pi3ehxPSYB8JA_aQ-zEeHd';
@@ -399,11 +400,7 @@ async function shortKarar(s, onay, kart){
   const { data, error } = await sb.rpc('resolve_short_moderation', { p_short_id:s.short_id, p_approved:onay, p_reason:sebep });
   if(session!==panelSession||route!==location.hash)return;
   if(error){ toast(mesaj(error)); kart.querySelectorAll('button').forEach(b=>b.disabled=false); return; }
-  if(!onay && data?.files?.length){
-    const yollar=data.files.filter(f=>f.bucket==='shorts').map(f=>f.path);
-    if(yollar.length){ const r=await sb.storage.from('shorts').remove(yollar); if(r.error) console.warn('dosya silinemedi', r.error); }
-  }
-  toast(onay?'Video onaylandı, akışa girdi.':'Video reddedildi.');
+  toast(onay?'Video onaylandı, akışa girdi.':'Video reddedildi. Dosyalar kalıcı medya temizliği kuyruğunda.');
   kart.remove(); ozetYukle();
   if(!$('#shorts-liste').querySelector('.kutu')) shortsYukle(); // sayfa boşaldı: sıradakileri getir (yoksa 'Bekleyen video yok')
 }

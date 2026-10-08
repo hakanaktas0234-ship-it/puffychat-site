@@ -1,0 +1,18 @@
+name: Yönetim davranış testleri
+on:
+  pull_request:
+    paths: ['yonetim/**', 'test/yonetim/**', '.github/workflows/yonetim-tests.yml']
+  push:
+    paths: ['yonetim/**', 'test/yonetim/**', '.github/workflows/yonetim-tests.yml']
+permissions:
+  contents: read
+jobs:
+  behavior:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node --test test/yonetim/*_test.cjs
+      - run: for script in yonetim/*.js; do node --check "$script"; done
