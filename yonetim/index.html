@@ -185,6 +185,7 @@ button.daha{display:block;width:100%;margin:10px 0;padding:10px;border-radius:10
 <script src="oyun-ayari.js"></script>
 <script src="ayarlar.js?v=20261008phase0"></script>
 <script src="finans-istek.js"></script>
+<script src="kapsam.js?v=20261008phase5"></script>
 <script src="phase1.js?v=20261008phase1"></script>
 <script>
 const SB_URL = 'https://rjdddbwotczhagdulwco.supabase.co';
@@ -330,6 +331,7 @@ function sayfaGit(ad){
   if(window.PuffyHediyeler&&PuffyHediyeler.route(ad)){PuffyPhase1.route(ad);return;}
   if(window.PuffyAyarlar&&PuffyAyarlar.route(ad)){PuffyPhase1.route(ad);return;}
   if(window.PuffyGozlem&&PuffyGozlem.route(ad)){PuffyPhase1.route(ad);return;}
+  if(window.PuffyKapsam&&PuffyKapsam.route(ad)){PuffyPhase1.route(ad);return;}
   if(window.PuffyOyunlar&&PuffyOyunlar.route(ad)){PuffyPhase1.route(ad);return;}
   if(window.PuffyTopluluk&&PuffyTopluluk.route(ad)){PuffyPhase1.route(ad);return;}
   if(ad.startsWith('onay/')){PuffyPhase1.route(ad);if(PuffyApprovals.route(ad))return;}
