@@ -174,6 +174,7 @@ button.daha{display:block;width:100%;margin:10px 0;padding:10px;border-radius:10
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>
 <script src="phase2.js"></script>
 <script src="phase3.js"></script>
+<script src="moderasyon.js"></script>
 <script src="odemeler.js"></script>
 <script src="approvals.js?v=20261004m"></script>
 <script src="icerik.js"></script>
@@ -321,8 +322,10 @@ $('#btn-cikis').onclick = cikis; $('#btn-cikis-giris').onclick = cikis;
 
 // ---------- SAYFALAR ----------
 function sayfaGit(ad){
+  queueGate.invalidate();
   if(!panelSession) return;
   ad = ad || 'ozet';
+  if(window.PuffyModeration&&PuffyModeration.route(ad)){PuffyPhase1.route(ad);return;}
   if(window.PuffyOdemeler&&PuffyOdemeler.route(ad)){PuffyPhase1.route(ad);return;}
   if(window.PuffyHediyeler&&PuffyHediyeler.route(ad)){PuffyPhase1.route(ad);return;}
   if(window.PuffyAyarlar&&PuffyAyarlar.route(ad)){PuffyPhase1.route(ad);return;}
@@ -353,16 +356,18 @@ function rozet(id, n){ const e=$('#'+id); n=Number(n||0); e.textContent=n; e.cla
 
 // ---------- SHORTS ----------
 $('#btn-shorts-yenile').onclick = ()=>shortsYukle();
-const SAYFA=25; let shortsOffset=0;
+const queueGate=new PuffyModeration.RequestGate();window.PuffyQueueInvalidate=()=>{queueGate.invalidate();$('#shorts-liste').replaceChildren();$('#sikayet-liste').replaceChildren();};
+const SAYFA=25; let shortsOffset=0,shortsCursor=null;
 async function shortsYukle(devam){
-  const l=$('#shorts-liste'); if(!devam){ shortsOffset=0; l.innerHTML='<div class="bos">Yükleniyor…</div>'; }
-  l.querySelector('.daha')?.remove();
+  const l=$('#shorts-liste'); if(!devam){ shortsOffset=0; shortsCursor=null; l.innerHTML='<div class="bos">Yükleniyor…</div>'; }
+  const token=queueGate.next(),session=panelSession,route=location.hash,more=l.querySelector('.daha');if(more)more.disabled=true;
   // O05: 100 kayıt sınırı yerine 25'lik sayfalar; "Daha fazla" ile kuyruğun sonuna kadar gidilir.
-  const { data, error } = await sb.rpc('shorts_onay_kuyrugu', { p_limit: SAYFA, p_offset: shortsOffset });
-  if(error){ if(!devam) l.innerHTML=`<div class="bos">${esc(mesaj(error))}</div>`; else toast(mesaj(error)); return; }
-  if(!devam) l.innerHTML='';
+  const { data, error } = await sb.rpc('shorts_onay_kuyrugu_v2', { p_limit: SAYFA, p_cursor: shortsCursor }).catch(error=>({error}));
+  if(!queueGate.valid(token)||session!==panelSession||route!==location.hash)return;
+  if(error){ if(more)more.disabled=false;if(!devam) l.innerHTML=`<div class="bos">${esc(mesaj(error))}</div>`; else toast(mesaj(error)); return; }
+  more?.remove();if(!devam) l.innerHTML='';
   if(!data?.length){ if(!devam){ l.innerHTML='<div class="bos">Bekleyen video yok.</div>'; rozet('r-short',0); } return; }
-  const toplam=Number(data[0].bekleyen_toplam||0); rozet('r-short', toplam); shortsOffset+=data.length;
+  const toplam=Number(data[0].bekleyen_toplam||0); if(!devam)rozet('r-short', toplam); shortsOffset+=data.length;const last=data.at(-1);shortsCursor={id:last.short_id,at:last.created_at,sensitive:last.is_sensitive_content};
   for(const s of data){
     const d=document.createElement('div'); d.className='kutu';
     const tags=(s.hashtags||[]).map(h=>'#'+esc(h)).join(' ');
@@ -381,14 +386,16 @@ async function shortsYukle(devam){
     d.querySelectorAll('button[data-onay]').forEach(b=>b.onclick=()=>shortKarar(s, b.dataset.onay==='1', d));
     l.appendChild(d);
   }
-  if(shortsOffset<toplam){ const b=document.createElement('button'); b.className='daha'; b.textContent=`Daha fazla (${shortsOffset} / ${toplam})`; b.onclick=()=>shortsYukle(true); l.appendChild(b); }
-  else { const n=document.createElement('div'); n.className='bos daha'; n.textContent=`Hepsi listelendi (${toplam}).`; l.appendChild(n); }
+  if(data.length===SAYFA){ const b=document.createElement('button'); b.className='daha'; b.textContent=`Daha fazla (${shortsOffset} gösterildi)`; b.onclick=()=>shortsYukle(true); l.appendChild(b); }
+  else { const n=document.createElement('div'); n.className='bos daha'; n.textContent=`Hepsi listelendi (${shortsOffset}).`; l.appendChild(n); }
 }
 async function shortKarar(s, onay, kart){
+  const session=panelSession,route=location.hash;
   let sebep=null;
   if(!onay){ sebep=prompt('Red sebebi (isteğe bağlı):',''); if(sebep===null) return; }
   kart.querySelectorAll('button').forEach(b=>b.disabled=true);
   const { data, error } = await sb.rpc('resolve_short_moderation', { p_short_id:s.short_id, p_approved:onay, p_reason:sebep });
+  if(session!==panelSession||route!==location.hash)return;
   if(error){ toast(mesaj(error)); kart.querySelectorAll('button').forEach(b=>b.disabled=false); return; }
   if(!onay && data?.files?.length){
     const yollar=data.files.filter(f=>f.bucket==='shorts').map(f=>f.path);
@@ -403,15 +410,16 @@ async function shortKarar(s, onay, kart){
 let sikayetTur='kullanici';
 $('#sikayet-sekmeler').querySelectorAll('button').forEach(b=>b.onclick=()=>{ sikayetTur=b.dataset.tur; $('#sikayet-sekmeler').querySelectorAll('button').forEach(x=>x.classList.toggle('aktif',x===b)); sikayetYukle(); });
 const SEBEP = { child_safety:'Çocuk güvenliği', harassment:'Taciz', spam:'Spam', nudity:'Müstehcenlik', violence:'Şiddet', hate:'Nefret söylemi', scam:'Dolandırıcılık', other:'Diğer' };
-let sikayetOffset=0;
+let sikayetOffset=0,sikayetCursor=null;
 async function sikayetYukle(devam){
-  const l=$('#sikayet-liste'); if(!devam){ sikayetOffset=0; l.innerHTML='<div class="bos">Yükleniyor…</div>'; }
-  l.querySelector('.daha')?.remove();
-  const { data, error } = await sb.rpc('moderator_sikayet_kuyrugu', { p_tur:sikayetTur, p_limit:SAYFA, p_offset:sikayetOffset });
-  if(error){ if(!devam) l.innerHTML=`<div class="bos">${esc(mesaj(error))}</div>`; else toast(mesaj(error)); return; }
-  if(!devam) l.innerHTML='';
+  const l=$('#sikayet-liste'); if(!devam){ sikayetOffset=0; sikayetCursor=null; l.innerHTML='<div class="bos">Yükleniyor…</div>'; }
+  const token=queueGate.next(),session=panelSession,route=location.hash,more=l.querySelector('.daha');if(more)more.disabled=true;
+  const { data, error } = await sb.rpc('moderator_sikayet_kuyrugu_v2', { p_tur:sikayetTur, p_limit:SAYFA, p_cursor:sikayetCursor }).catch(error=>({error}));
+  if(!queueGate.valid(token)||session!==panelSession||route!==location.hash)return;
+  if(error){ if(more)more.disabled=false;if(!devam) l.innerHTML=`<div class="bos">${esc(mesaj(error))}</div>`; else toast(mesaj(error)); return; }
+  more?.remove();if(!devam) l.innerHTML='';
   if(!data?.length){ if(!devam) l.innerHTML='<div class="bos">Bu türde şikayet yok.</div>'; return; }
-  const sToplam=Number(data[0].toplam||0); sikayetOffset+=data.length;
+  const sToplam=Number(data[0].toplam||0); sikayetOffset+=data.length;const last=data.at(-1);sikayetCursor={id:last.sikayet_id,at:last.olusturuldu,sensitive:last.sebep==='child_safety'};
   for(const r of data){
     const d=document.createElement('div'); d.className='kutu';
     const kaldirilabilir = ['short','moment','short_comment'].includes(r.icerik_turu);
@@ -422,18 +430,20 @@ async function sikayetYukle(devam){
         <div style="margin-top:6px"><b>${esc(r.hedef_ad||'—')}</b> <span class="meta">hakkında · şikayet eden: ${esc(r.sikayet_eden_ad||'—')}</span></div>
         ${r.onizleme?`<div class="meta" style="margin-top:4px">“${esc(r.onizleme)}”</div>`:''}
         <div class="islemler">
-          <button data-i="kapat">Şikayeti kapat</button>
+          <button data-i="dosya">Kanıt ve dosya</button><button data-i="kapat">Şikayeti kapat</button>
           ${kaldirilabilir?'<button class="danger" data-i="kaldir">İçeriği kaldır</button>':''}
           ${r.hedef_id?'<button class="danger" data-i="ban">Kullanıcıyı banla</button>':''}
         </div>
       </div></div>`;
-    d.querySelector('[data-i=kapat]').onclick=async()=>{ const {error}=await sb.rpc('moderator_sikayeti_kapat',{p_tur:r.kaynak,p_id:r.sikayet_id}); if(error) return toast(mesaj(error)); toast('Şikayet kapatıldı.'); d.remove(); ozetYukle(); };
-    const k=d.querySelector('[data-i=kaldir]'); if(k) k.onclick=async()=>{ if(!confirm('İçerik kaldırılsın mı?')) return; const {error}=await sb.rpc('moderator_icerigi_kaldir',{p_tur:r.icerik_turu,p_id:r.icerik_id}); if(error) return toast(mesaj(error)); toast('İçerik kaldırıldı.'); d.remove(); ozetYukle(); };
+    d.querySelector('[data-i=dosya]').onclick=()=>PuffyModeration.showCase(r.kaynak,r.sikayet_id);
+    const decide=async action=>{const reason=prompt('Karar gerekçesi (en az 3 karakter):','');if(reason===null)return;if(reason.trim().length<3){toast('Gerekçe en az 3 karakter olmalı.');return;}const session=panelSession,route=location.hash;d.querySelectorAll('button').forEach(b=>b.disabled=true);const {data,error}=await sb.rpc('yonetim_sikayet_karari',{p_kaynak:r.kaynak,p_id:r.sikayet_id,p_karar:action,p_neden:reason}).catch(error=>({error}));if(session!==panelSession||route!==location.hash)return;if(error||data?.ok!==true){toast(mesaj(error||{message:data?.error||'OPERATION_REJECTED'}));d.querySelectorAll('button').forEach(b=>b.disabled=false);return;}toast('Karar dosyaya kaydedildi.');d.remove();ozetYukle();};
+    d.querySelector('[data-i=kapat]').onclick=()=>decide('kapat');
+    const k=d.querySelector('[data-i=kaldir]');if(k)k.onclick=()=>decide('kaldir');
     const b=d.querySelector('[data-i=ban]'); if(b) b.onclick=()=>banla(r.hedef_id, r.hedef_ad);
     l.appendChild(d);
   }
-  if(sikayetOffset<sToplam){ const b=document.createElement('button'); b.className='daha'; b.textContent=`Daha fazla (${sikayetOffset} / ${sToplam})`; b.onclick=()=>sikayetYukle(true); l.appendChild(b); }
-  else { const n=document.createElement('div'); n.className='bos daha'; n.textContent=`Hepsi listelendi (${sToplam}).`; l.appendChild(n); }
+  if(data.length===SAYFA){ const b=document.createElement('button'); b.className='daha'; b.textContent=`Daha fazla (${sikayetOffset} gösterildi)`; b.onclick=()=>sikayetYukle(true); l.appendChild(b); }
+  else { const n=document.createElement('div'); n.className='bos daha'; n.textContent=`Hepsi listelendi (${sikayetOffset}).`; l.appendChild(n); }
 }
 
 async function banla(userId, ad, sonra){
