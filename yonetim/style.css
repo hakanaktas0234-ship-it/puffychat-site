@@ -59,3 +59,8 @@ button.danger,.dialog-actions button.primary.danger{background:var(--red,#c0392b
 
 /* Oyun kasası (2026-10-07) */
 .metric.uyari strong{color:#d9822b}.rozet.uyari{background:#d9822b;color:#fff}tr.risk td{background:rgba(217,130,43,.08)}
+/* 2026-10-09: kullanıcı/aile/oda adları süslü Unicode içerir (𝐍𝐀𝐙𝐋𝐈, ⍣⃝, ✤). Dekoratif başlık fontu
+   bu karakterleri "NO GLYPH" kutusu olarak çiziyordu; adlar sistem + sembol/matematik fontlarıyla gösterilir. */
+.identity h1,.person a,.person strong,.org-row strong,.isim{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Apple Symbols','STIX Two Math','Noto Sans Math','Noto Sans Symbols 2','Segoe UI Symbol','Cambria Math',sans-serif;font-weight:600;letter-spacing:0}
+.identity h1{font-size:30px}
+@media(max-width:760px){.identity h1{font-size:24px}}
