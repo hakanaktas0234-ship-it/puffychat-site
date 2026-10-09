@@ -18,7 +18,7 @@
 </div></header>
 
 <main><div class="kabuk">
-  <p class="tarih">Son güncelleme: 25 Eylül 2026 · Uygulama: Puffy</p>
+  <p class="tarih">Son güncelleme: 9 Ekim 2026 · Uygulama: Puffy</p>
   <h1>Gizlilik Politikası</h1>
   <p class="ozet">Bu belge, Puffy'yi kullandığında hangi verilerin işlendiğini, hangi
      hukuki sebebe dayandığını, kimlerle paylaşıldığını ve ne kadar saklandığını
@@ -56,7 +56,12 @@
   <h3>Konum</h3>
   <p>Konumun yalnızca özel mesajda <em>konum gönder</em> seçeneğine dokunduğunda
      alınır: o anki konumun mesajla birlikte karşı tarafa gönderilir ve mesajla
-     birlikte saklanır. Uygulama arka planda konum toplamaz.</p>
+     birlikte saklanır. Uygulama GPS ile arka planda konum toplamaz.</p>
+  <p>Güvenlik ve dolandırıcılık önleme amacıyla bağlantı IP'nizden yaklaşık konum
+     (ülke/şehir) işlenir. Bu bilgi uygulamayı açtığında bağlantı adresinden çıkarılır;
+     kesin konum ya da adres değildir. Ham IP adresi bu kayıtta saklanmaz, yalnızca
+     maskelenmiş hâli (örneğin 85.105.*.*) tutulur ve yalnızca yetkili yöneticiler
+     güvenlik incelemesi için görebilir.</p>
 
   <h3>Cihaz ve teknik veriler</h3>
   <p>Cihaz tanımlayıcısı, cihaz adı ve platformu, bildirim için kullanılan push
@@ -80,7 +85,7 @@
     <tr><th>Amaç</th><th>Hangi veri</th></tr>
     <tr><td>Hesabı oluşturmak ve yönetmek</td><td>E-posta, profil alanları</td></tr>
     <tr><td>Hizmeti sunmak (odalar, mesajlar, hediyeler)</td><td>İçerik ve etkinlik verileri</td></tr>
-    <tr><td>Güvenlik, kötüye kullanım ve dolandırıcılık önleme</td><td>Cihaz tanımlayıcısı, IP, şikâyet ve moderasyon kayıtları</td></tr>
+    <tr><td>Güvenlik, kötüye kullanım ve dolandırıcılık önleme</td><td>Cihaz tanımlayıcısı, IP, IP'den yaklaşık konum (ülke/şehir), şikâyet ve moderasyon kayıtları</td></tr>
     <tr><td>Bildirim göndermek</td><td>Push anahtarı</td></tr>
     <tr><td>Hataları bulmak, performansı ölçmek</td><td>Çökme kayıtları, kullanım istatistikleri</td></tr>
     <tr><td>Ödeme ve vergi yükümlülükleri</td><td>Satın alma kayıtları, kimlik bilgileri, IBAN</td></tr>
@@ -103,6 +108,8 @@
     <li><strong>Google (Firebase)</strong> — bildirim gönderimi, çökme raporları ve
         kullanım istatistikleri.</li>
     <li><strong>Google Play</strong> — uygulama içi satın alma ve makbuz doğrulama.</li>
+    <li><strong>IP konum servisi</strong> — bağlantı IP'sinden yaklaşık ülke/şehir
+        bilgisinin çıkarılması. Servise yalnızca IP adresi gönderilir.</li>
     <li><strong>Yetkili makamlar</strong> — kanuni yükümlülük ya da mahkeme kararı
         hâlinde.</li>
   </ul>
@@ -126,6 +133,7 @@
     <tr><td>Kimlik doğrulama (KYC) ve IBAN bilgileri</td><td>10 yıl (mali mevzuat)</td></tr>
     <tr><td>Şikâyet ve moderasyon kayıtları</td><td>Moderasyon geçmişinin parçası olarak saklanır</td></tr>
     <tr><td>Platform ve cihaz engelleri</td><td>Engel sürdüğü sürece</td></tr>
+    <tr><td>IP'den yaklaşık konum kayıtları (ülke/şehir, maskeli IP)</td><td>Kişi başına son 30 bağlantı; hesap silinince silinir</td></tr>
     <tr><td>Çocuk güvenliğine ilişkin kayıtlar</td><td>İlgili mevzuatın öngördüğü süre</td></tr>
   </table></div>
   <p>Hesap silindikten sonra kalan kayıtların hiçbiri bir profile bağlı değildir;

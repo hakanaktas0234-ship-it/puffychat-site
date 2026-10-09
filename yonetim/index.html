@@ -124,10 +124,13 @@ button.daha{display:block;width:100%;margin:10px 0;padding:10px;border-radius:10
     <a class="menu" href="#call-host" data-sayfa="call-host" hidden><span>Call Host aktifliği</span></a>
     <a class="menu" href="#kasa" data-sayfa="kasa" hidden><span>Kasa geçmişi</span></a>
     <a class="menu" href="#oyun-kasasi" data-sayfa="oyun-kasasi" hidden><span>Oyun kasası</span></a>
-    <div id="approval-nav"></div><div id="hediye-nav"></div><div id="ayar-nav"></div><div class="alt"><div id="kim"></div><button id="btn-cikis">Çıkış</button></div>
+    <a class="menu" href="#oyun-turlari" data-sayfa="oyun-turlari" hidden><span>Oyun turları</span></a>
+    <div id="approval-nav"></div><div id="hediye-nav"></div><div id="anlar-nav"></div><div id="bakim-nav"></div><div id="ayar-nav"></div><div class="alt"><div id="kim"></div><button id="btn-cikis">Çıkış</button></div>
   </nav>
   <main><header class="topbar" id="panel-topbar"></header><div class="workspace">
     <div id="s-hediye" class="hidden"></div>
+    <div id="s-anlar" class="hidden"></div>
+    <div id="s-bakim" class="hidden"></div>
     <div id="s-ayarlar" class="hidden"></div>
     <div id="s-gozlem" class="hidden"></div>
     <div id="s-topluluk" class="hidden"></div>
@@ -181,13 +184,15 @@ button.daha{display:block;width:100%;margin:10px 0;padding:10px;border-radius:10
 <script src="icerik.js?v=20261008audit6"></script>
 <script src="topluluklar.js?v=20261008audit6"></script>
 <script src="gozlem.js?v=20261008audit6"></script>
-<script src="oyunlar.js?v=20261008audit6"></script>
+<script src="oyunlar.js?v=20261009a"></script>
 <script src="hediyeler.js?v=20261008audit6"></script>
+<script src="anlar.js?v=20261009a"></script>
+<script src="bakim.js?v=20261009a"></script>
 <script src="oyun-ayari.js?v=20261008audit6"></script>
 <script src="ayarlar.js?v=20261008audit6"></script>
 <script src="finans-istek.js?v=20261008audit6"></script>
 <script src="kapsam.js?v=20261008audit6"></script>
-<script src="phase1.js?v=20261008audit6"></script>
+<script src="phase1.js?v=20261009b"></script>
 <script>
 const SB_URL = 'https://rjdddbwotczhagdulwco.supabase.co';
 const SB_KEY = 'sb_publishable_TMb-Ldq66Pi3ehxPSYB8JA_aQ-zEeHd';
@@ -330,6 +335,8 @@ function sayfaGit(ad){
   if(window.PuffyModeration&&PuffyModeration.route(ad)){PuffyPhase1.route(ad);return;}
   if(window.PuffyOdemeler&&PuffyOdemeler.route(ad)){PuffyPhase1.route(ad);return;}
   if(window.PuffyHediyeler&&PuffyHediyeler.route(ad)){PuffyPhase1.route(ad);return;}
+  if(window.PuffyAnlar&&PuffyAnlar.route(ad)){PuffyPhase1.route(ad);return;}
+  if(window.PuffyBakim&&PuffyBakim.route(ad)){PuffyPhase1.route(ad);return;}
   if(window.PuffyAyarlar&&PuffyAyarlar.route(ad)){PuffyPhase1.route(ad);return;}
   if(window.PuffyGozlem&&PuffyGozlem.route(ad)){PuffyPhase1.route(ad);return;}
   if(window.PuffyKapsam&&PuffyKapsam.route(ad)){PuffyPhase1.route(ad);return;}

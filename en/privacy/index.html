@@ -19,7 +19,7 @@
 </div></header>
 
 <main><div class="kabuk">
-  <p class="tarih">Last updated: 25 September 2026 · App: Puffy</p>
+  <p class="tarih">Last updated: 9 October 2026 · App: Puffy</p>
   <h1>Privacy Policy</h1>
   <p class="ozet">This policy explains which data is processed when you use Puffy, on what
      legal basis, who it is shared with and how long it is kept. Instead of general
@@ -57,7 +57,12 @@
   <h3>Location</h3>
   <p>Your location is only collected when you tap the send-location option in a private
      message: your current location is sent to the other person with that message and
-     stored with it. The app does not collect location in the background.</p>
+     stored with it. The app does not collect GPS location in the background.</p>
+  <p>For security and fraud prevention, an approximate location (country/city) is derived
+     from your connection IP address. It is determined when you open the app and is not a
+     precise location or address. The raw IP address is not stored in this record; only a
+     masked form (for example 85.105.*.*) is kept, visible only to authorised administrators
+     for security reviews.</p>
 
   <h3>Device and technical data</h3>
   <p>Device identifier, device name and platform, push token used for notifications,
@@ -80,7 +85,7 @@
     <tr><th>Purpose</th><th>Data</th></tr>
     <tr><td>Creating and managing your account</td><td>Email, profile fields</td></tr>
     <tr><td>Providing the service (rooms, messages, gifts)</td><td>Content and activity data</td></tr>
-    <tr><td>Security, abuse and fraud prevention</td><td>Device identifier, IP, report and moderation records</td></tr>
+    <tr><td>Security, abuse and fraud prevention</td><td>Device identifier, IP, approximate location from IP (country/city), report and moderation records</td></tr>
     <tr><td>Sending notifications</td><td>Push token</td></tr>
     <tr><td>Finding bugs, measuring performance</td><td>Crash logs, usage statistics</td></tr>
     <tr><td>Payment and tax obligations</td><td>Purchase records, identity details, IBAN</td></tr>
@@ -103,6 +108,8 @@
     <li><strong>Google (Firebase)</strong> — notifications, crash reports and usage
         statistics.</li>
     <li><strong>Google Play</strong> — in-app purchases and receipt verification.</li>
+    <li><strong>IP geolocation service</strong> — deriving an approximate country/city from
+        the connection IP. Only the IP address is sent to the service.</li>
     <li><strong>Competent authorities</strong> — where required by law or court order.</li>
   </ul>
   <p>For transfers outside Türkiye and the EEA, the safeguards required by KVKK Article 9
@@ -125,6 +132,7 @@
     <tr><td>Identity verification (KYC) and IBAN details</td><td>10 years (financial regulations)</td></tr>
     <tr><td>Report and moderation records</td><td>Kept as part of the moderation history</td></tr>
     <tr><td>Platform and device bans</td><td>While the ban lasts</td></tr>
+    <tr><td>Approximate location records from IP (country/city, masked IP)</td><td>Last 30 connections per person; deleted when the account is deleted</td></tr>
     <tr><td>Child-safety records</td><td>As required by the applicable law</td></tr>
   </table></div>
   <p>None of the records kept after deletion remain linked to a profile; no name, photo or
