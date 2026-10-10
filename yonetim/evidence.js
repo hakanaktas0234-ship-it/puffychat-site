@@ -3,10 +3,21 @@
 'use strict';
 window.PuffyEvidence = { render(ctx) {
  const {root,profile,rpc,invoke,esc,errorText}=ctx;
- let offset=0,ticket=0;
- root.innerHTML='<section class="iletisim"><h2>Kanıt arşivi</h2><p class="note">Birebir mesajların 90 günlük özel arşivi. Şikâyete bağlanan kayıtlar korunabilir. Her açılış kaydedilir. Eski silinmiş içerikler burada yeniden üretilemez.</p><div data-evidence-list></div></section>';
+ let offset=0,ticket=0;const people=new Map([[profile.id,profile]]);
+ root.innerHTML='<section class="iletisim"><h2>Kanıt arşivi</h2><p class="note">Birebir mesajların 90 günlük özel arşivi. Şikâyete bağlanan kayıtlar korunabilir. Her açılış kaydedilir. Eski silinmiş içerikler burada yeniden üretilemez. Profil adları ve kullanıcı ID numaraları günceldir.</p><div data-evidence-list></div></section>';
  const box=root.querySelector('[data-evidence-list]');
  const stamp=x=>new Date(x).toLocaleString('tr-TR',{timeZone:'Europe/Istanbul'});
+
+ const person=id=>{
+  if(!id)return 'Alıcı kaydı bulunamadı';
+  const p=people.get(id), name=p?.nickname||'Profil adı alınamadı', display=p?.display_id;
+  return '<a href="#kullanici/'+esc(id)+'" style="overflow-wrap:anywhere">'+esc(name)+' <strong>· ID '+esc(display??id)+'</strong></a>';
+ };
+ function parties(r){
+  const recipient=r.sender_id===r.user_a?r.user_b:r.sender_id===r.user_b?r.user_a:null;
+  const system=!recipient&&(r.versions||[]).some(v=>v.content?.kind==='system');
+  return '<div data-message-parties style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin:14px 0"><span><small>Gönderen</small><br>'+ (system?'Sistem bildirimi':person(r.sender_id))+'</span><strong aria-label="gönderdi">→</strong><span><small>Alıcı</small><br>'+(recipient?person(recipient):system?person(r.user_a)+' / '+person(r.user_b):'Alıcı kaydı bulunamadı')+'</span></div>';
+ }
  const operations={backfill:'Mevcut mesaj arşive alındı',sent:'Mesaj gönderildi',before_change:'Değişiklik öncesi kayıt',deleted:'Mesaj silindi',changed:'İçerik değişti',hard_deleted:'Mesaj kalıcı kaldırıldı'};
  const kindNames={text:'Metin',image:'Görsel',gift:'Hediye',system:'Sistem bildirimi',location:'Konum'};
  function readable(r){
@@ -21,7 +32,13 @@ window.PuffyEvidence = { render(ctx) {
   try{
    const d=await rpc('yonetim_dm_kanit',{p_user:profile.id,p_limit:25,p_offset:offset});
    if(t!==ticket||!root.isConnected)return;
-   box.innerHTML=(d.rows||[]).map(r=>'<article class="panel" data-id="'+esc(r.id)+'"><h3>'+esc(stamp(r.created_at))+'</h3><p>Mesaj '+esc(r.id)+' · Gönderen '+esc(r.sender_id)+'</p><p>'+ (r.held?'Şikâyet için korunuyor':r.purging?'Saklama süresi dolmuş, temizleniyor':'Saklama sonu: '+esc(stamp(r.retain_until)))+'</p>'+readable(r)+r.versions.map(v=>'<details><summary>'+esc(operations[v.operation]||v.operation)+' — Teknik kayıt · '+esc(stamp(v.captured_at))+'</summary><p>İşlem yapan: '+esc(v.actor_id||'Sunucu / kimlik kaydedilmemiş')+'</p><pre style="white-space:pre-wrap;overflow-wrap:anywhere">'+esc(JSON.stringify(v.content,null,2))+'</pre><p>Tür: '+esc(v.content.kind)+' · SHA-256: '+esc(v.sha256)+'</p></details>').join('')+(r.events||[]).map(e=>'<p>'+esc(e.table_name)+' · '+esc(e.operation)+' · '+esc(stamp(e.event_at))+' · İşlem yapan '+esc(e.actor_id||'Kaydedilmemiş / sunucu')+'</p>').join('')+r.media.map(m=>'<p>Görsel: '+esc(({ready:'Hazır',pending:'Kopyalanmayı bekliyor',copying:'Kopyalanıyor',error:'Kopyalama hatası',purging:'Saklama süresi doldu'})[m.status]||m.status)+(m.status==='ready'&&!r.purging?' <button data-media="'+esc(m.source_path)+'">Görseli 60 saniyelik erişimle aç</button>':'')+'</p>').join('')+(!r.purging?'<form data-hold><label>Şikâyet referansı / gerekçe<input name="reason" minlength="10" maxlength="1000" required></label><button>'+ (r.held?'Korumayı kaldır':'Şikâyet için koru')+'</button></form>':'')+'<div data-result></div></article>').join('')||'<p>Arşiv kaydı yok. Arşiv başlamadan önce silinmiş içerik bulunmayabilir.</p>';
+   const ids=[...new Set((d.rows||[]).flatMap(r=>[r.sender_id,r.user_a,r.user_b]).filter(id=>id&&!people.has(id)))];
+   if(ids.length&&ctx.sb){
+    const names=await ctx.sb.from('profiles').select('id,nickname,display_id').in('id',ids);
+    if(!names.error)for(const p of names.data||[])people.set(p.id,p);
+   }
+   if(t!==ticket||!root.isConnected)return;
+   box.innerHTML=(d.rows||[]).map(r=>'<article class="panel" data-id="'+esc(r.id)+'"><h3>'+esc(stamp(r.created_at))+'</h3>'+parties(r)+'<details><summary>Mesaj kimliği</summary><p>'+esc(r.id)+'</p></details><p>'+ (r.held?'Şikâyet için korunuyor':r.purging?'Saklama süresi dolmuş, temizleniyor':'Saklama sonu: '+esc(stamp(r.retain_until)))+'</p>'+readable(r)+r.versions.map(v=>'<details><summary>'+esc(operations[v.operation]||v.operation)+' — Teknik kayıt · '+esc(stamp(v.captured_at))+'</summary><p>İşlem yapan: '+esc(v.actor_id||'Sunucu / kimlik kaydedilmemiş')+'</p><pre style="white-space:pre-wrap;overflow-wrap:anywhere">'+esc(JSON.stringify(v.content,null,2))+'</pre><p>Tür: '+esc(v.content.kind)+' · SHA-256: '+esc(v.sha256)+'</p></details>').join('')+(r.events||[]).map(e=>'<p>'+esc(e.table_name)+' · '+esc(e.operation)+' · '+esc(stamp(e.event_at))+' · İşlem yapan '+esc(e.actor_id||'Kaydedilmemiş / sunucu')+'</p>').join('')+r.media.map(m=>'<p>Görsel: '+esc(({ready:'Hazır',pending:'Kopyalanmayı bekliyor',copying:'Kopyalanıyor',error:'Kopyalama hatası',purging:'Saklama süresi doldu'})[m.status]||m.status)+(m.status==='ready'&&!r.purging?' <button data-media="'+esc(m.source_path)+'">Görseli 60 saniyelik erişimle aç</button>':'')+'</p>').join('')+(!r.purging?'<form data-hold><label>Şikâyet referansı / gerekçe<input name="reason" minlength="10" maxlength="1000" required></label><button>'+ (r.held?'Korumayı kaldır':'Şikâyet için koru')+'</button></form>':'')+'<div data-result></div></article>').join('')||'<p>Arşiv kaydı yok. Arşiv başlamadan önce silinmiş içerik bulunmayabilir.</p>';
    box.insertAdjacentHTML('beforeend','<div class="pager"><span>'+esc(d.total)+' kayıt</span><button data-prev '+(!offset?'disabled':'')+'>Önceki</button><button data-next '+(offset+25>=d.total?'disabled':'')+'>Sonraki</button></div>');
    box.querySelector('[data-prev]').onclick=()=>{offset=Math.max(0,offset-25);load();};
    box.querySelector('[data-next]').onclick=()=>{offset+=25;load();};
