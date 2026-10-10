@@ -205,6 +205,11 @@ const SB_KEY = 'sb_publishable_TMb-Ldq66Pi3ehxPSYB8JA_aQ-zEeHd';
 const OTURUM_BOSTA_MS = 30*60*1000, OTURUM_AZAMI_MS = 12*60*60*1000;
 try { Object.keys(localStorage).filter(k=>k.startsWith('sb-')&&k.endsWith('-auth-token')).forEach(k=>localStorage.removeItem(k)); } catch(_){}
 const sb = supabase.createClient(SB_URL, SB_KEY, { auth: { storage: window.sessionStorage, persistSession: true, autoRefreshToken: true } });
+// 2026-10-10 (Hakan: "Şikayetler hep Yükleniyor…"): supabase-js 2.57 sorgu nesnesinin yalnız then'i var, catch'i yok.
+// sb.rpc(...).catch(...) kalıbı (Şikayetler, Shorts, şikayet kararı) TypeError verip sayfayı "Yükleniyor…"da bırakıyordu.
+(()=>{try{let p=Object.getPrototypeOf(sb.rpc('__catch_yoklama__'));while(p&&!Object.prototype.hasOwnProperty.call(p,'then'))p=Object.getPrototypeOf(p);
+ if(p&&typeof p.catch!=='function')Object.defineProperty(p,'catch',{configurable:true,writable:true,value:function(f){return Promise.resolve(this).catch(f)}});
+ if(p&&typeof p.finally!=='function')Object.defineProperty(p,'finally',{configurable:true,writable:true,value:function(f){return Promise.resolve(this).finally(f)}});}catch(_){}})();
 function oturumOku(k){ try { return Number(sessionStorage.getItem(k)||0); } catch(_){ return 0; } }
 function oturumYaz(k,v){ try { sessionStorage.setItem(k,String(v)); } catch(_){} }
 function hareketKaydet(){ if(panelSession && oturumSuresiDoldu()){ oturumDenetle().catch(()=>{}); return; } const s=Date.now(); if(s-oturumOku('puffy_son_hareket')>15000) oturumYaz('puffy_son_hareket', s); }
@@ -361,7 +366,7 @@ function sayfaGit(ad){
 window.addEventListener('hashchange', ()=>sayfaGit(location.hash.replace('#','')));
 $('#btn-yenile').onclick = ozetYukle;
 
-const OZET_AD = { short:'Shorts onayı', sikayet:'Şikayet', ajans_kurma:'Ajans kurma', ajans_logo:'Ajans logosu', etkinlik:'Etkinlik', oda_kapagi:'Oda kapağı', oda_temasi:'Oda teması', bayi_yukleme:'Bayi yükleme', para_cekme:'Para çekme' };
+const OZET_AD = { short:'Shorts onayı', sikayet:'Şikayet', ajans_kurma:'Ajans kurma', ajans_logo:'Ajans logosu', ajans_adi:'Ajans adı', etkinlik:'Etkinlik', oda_kapagi:'Oda kapağı', oda_temasi:'Oda teması', bayi_yukleme:'Bayi yükleme', para_cekme:'Para çekme' };
 const OZET_LINK = { short:'#shorts', sikayet:'#sikayet' };
 async function ozetYukle(){ if(panelSession)await PuffyApprovals.poll(); }
 
