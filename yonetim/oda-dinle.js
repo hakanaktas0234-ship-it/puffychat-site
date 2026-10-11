@@ -21,7 +21,7 @@
    if(error||!data?.token)throw new Error(data?.error||'TOKEN_ALINAMADI');
    const zg=new root.ZegoExpressEngine(data.app_id,data.server);
    try{zg.setDebugVerbose?.(false);}catch{}
-   const a={zg,oda:String(oda),akislar:new Map(),dlg,goruldu:new Set(),sonHata:''};aktif=a;
+   const a={zg,oda:String(data.room_id||oda),akislar:new Map(),dlg,goruldu:new Set(),sonHata:''};aktif=a;
    const kutu=dlg.querySelector('[data-sesler]'),ses=dlg.querySelector('[data-ses]');
    const say=()=>durum((a.akislar.size?'Dinleniyor · '+a.akislar.size+' kişi mikrofonda':'Bağlandı · Şu an mikrofonda kimse yok')+' · yayın görülen: '+a.goruldu.size+(a.sonHata?' · oynatma hatası: '+a.sonHata:''));
    ses.oninput=()=>{for(const el of a.akislar.values())el.volume=Number(ses.value)/100;};
