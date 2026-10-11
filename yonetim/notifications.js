@@ -3,18 +3,21 @@
   'use strict';
   let ctx, options, storageKey, preferenceKey, records=[], cursor=null, audio, lastTone=0;
   let sound=false, volume=0.45, storageOK=true, connection='Bağlanıyor', pending=0;
-  let arming=false;
+  let arming=false,alertCount=0,alertKey=null,lastSync=0;
   let audioState='Ses kapalı', desktopError='', generation=0;
   const $=s=>document.querySelector(s);
   const validId=x=>typeof x==='string' && /^\d{1,20}$/.test(x);
   const permission=()=>('Notification' in window ? Notification.permission : 'unsupported');
+  const cleanRef=x=>typeof x==='string'&&/^[A-Za-z0-9_-]{1,64}$/.test(x)?x:null;
+  const byNewest=(a,b)=>{const x=BigInt(a.id),y=BigInt(b.id);return x>y?-1:x<y?1:0;};
+  const shape=r=>({id:r.id,key:r.key,at:r.at,read:r.read===true,kayit:cleanRef(r.kayit),kaynak:cleanRef(r.kaynak)});
   function read(){
     try {
       const s=JSON.parse(localStorage.getItem(storageKey)||'null');
       if(!s)return;
       cursor=validId(s.cursor)?s.cursor:null;
       sound=s.sound===true;volume=Number.isFinite(s.volume)?Math.min(1,Math.max(.1,s.volume)):.45;
-      records=(Array.isArray(s.records)?s.records:[]).filter(r=>validId(r.id)&&options.allowed(r.key)&&Number.isFinite(Date.parse(r.at))&&Date.parse(r.at)>Date.now()-30*86400000).slice(0,100).map(r=>({id:r.id,key:r.key,at:r.at,read:r.read===true}));
+      records=(Array.isArray(s.records)?s.records:[]).filter(r=>validId(r.id)&&options.allowed(r.key)&&Number.isFinite(Date.parse(r.at))&&Date.parse(r.at)>Date.now()-30*86400000).slice(0,100).map(shape);
     } catch { storageOK=false; }
   }
   function readPreferences(){
@@ -35,13 +38,46 @@
     if(!preferenceKey)return;
     try{localStorage.setItem(preferenceKey,JSON.stringify({sound,volume}));}catch{storageOK=false;}
   }
+  // #07 (2026-10-11): iki sekme aynı kaydı yazar. Yazmadan önce diskteki hâlle
+  // birleştir: okundu bilgisi yalnız true yönüne gider, cursor yalnız ileri gider.
+  function merge(){
+    let s=null;try{s=JSON.parse(localStorage.getItem(storageKey)||'null');}catch{return;}
+    if(!s||!Array.isArray(s.records))return;
+    const byId=new Map(records.map(r=>[r.id,r]));
+    for(const o of s.records){
+      if(!o||!validId(o.id)||!options.allowed(o.key))continue;
+      const m=byId.get(o.id);
+      if(m){if(o.read===true)m.read=true;if(!m.kayit&&cleanRef(o.kayit)){m.kayit=cleanRef(o.kayit);m.kaynak=cleanRef(o.kaynak);}}
+      else if(Number.isFinite(Date.parse(o.at))&&Date.parse(o.at)>Date.now()-30*86400000)byId.set(o.id,shape(o));
+    }
+    records=[...byId.values()].sort(byNewest).slice(0,100);
+    if(validId(s.cursor)&&(cursor===null||BigInt(s.cursor)>BigInt(cursor)))cursor=s.cursor;
+  }
   function save(){
     if(!storageKey)return;
-    try {localStorage.setItem(storageKey,JSON.stringify({cursor,records,sound,volume}));storageOK=true;}
+    try {merge();localStorage.setItem(storageKey,JSON.stringify({cursor,records,sound,volume}));storageOK=true;}
     catch {storageOK=false;}
   }
+  function onStorage(e){if(!ctx||!storageKey||e.key!==storageKey)return;merge();render();}
+  // #09: okundu bilgisi sunucuda da tutulur; başka bilgisayarda aynı hesapla tutarlı olur.
+  function markRead(ids){
+    const list=ids.filter(validId);if(!list.length)return;
+    for(const r of records)if(list.includes(r.id))r.read=true;
+    save();render();
+    if(ctx?.rpc)Promise.resolve().then(()=>ctx.rpc('yonetim_bildirim_okundu_isaretle',{p_ids:list.map(Number)})).catch(()=>{});
+  }
+  async function syncRead(force=false){
+    if(!ctx?.rpc||(!force&&Date.now()-lastSync<60000))return;
+    lastSync=Date.now();const c=ctx,token=generation;
+    try{const d=await c.rpc('yonetim_basvuru_olaylari_getir',{p_after:null});if(token!==generation||ctx!==c)return;
+      const okundu=new Set((d?.rows||[]).filter(r=>r.okundu===true).map(r=>String(r.id)));
+      let changed=false;for(const r of records)if(!r.read&&okundu.has(r.id)){r.read=true;changed=true;}
+      if(changed){save();render();}
+    }catch{}
+  }
+  function onFocus(){renderStatus();void syncRead();}
   function init(c,o){
-    stop();ctx=c;options=o;records=[];cursor=null;sound=false;volume=.45;storageOK=true;pending=0;connection='Bağlanıyor';desktopError='';lastTone=0;
+    stop();ctx=c;options=o;records=[];cursor=null;sound=false;volume=.45;storageOK=true;pending=0;connection='Bağlanıyor';desktopError='';lastTone=0;alertCount=0;alertKey=null;lastSync=0;
     // Yetki kümesi değiştiğinde eski kapsamın cursor'u yeni kapsamı atlamasın.
     storageKey=c.user?.id?'puffy_notifications_v1:'+c.user.id+':'+o.keys.filter(o.allowed).sort().join(','):null;
     preferenceKey=c.user?.id?'puffy_notification_preferences_v1:'+c.user.id:null;
@@ -56,11 +92,11 @@
     $('#notice-volume').oninput=e=>{volume=Number(e.target.value)/100;savePreferences();save();};
     document.addEventListener('pointerdown',armAudio);document.addEventListener('keydown',armAudio);
     document.addEventListener('pointerdown',outside);document.addEventListener('keydown',keyboard);
-    window.addEventListener('focus',renderStatus);
-    render();
+    window.addEventListener('focus',onFocus);window.addEventListener('storage',onStorage);
+    render();void syncRead(true);
   }
   function stop(){
-    generation++;arming=false;document.removeEventListener('pointerdown',armAudio);document.removeEventListener('keydown',armAudio);document.removeEventListener('pointerdown',outside);document.removeEventListener('keydown',keyboard);window.removeEventListener('focus',renderStatus);
+    generation++;arming=false;document.removeEventListener('pointerdown',armAudio);document.removeEventListener('keydown',armAudio);document.removeEventListener('pointerdown',outside);document.removeEventListener('keydown',keyboard);window.removeEventListener('focus',onFocus);window.removeEventListener('storage',onStorage);
     if(audio){audio.close().catch(()=>{});audio=null;}
     $('#approval-bell-wrap')?.remove();$('#approval-alert')?.remove();ctx=null;storageKey=null;preferenceKey=null;records=[];cursor=null;
   }
@@ -74,12 +110,15 @@
   function keyboard(e){if(e.key==='Escape'&&!$('#approval-events')?.classList.contains('hidden')){toggle(false);$('#approval-bell')?.focus();}}
   async function action(e){
     const link=e.target.closest('[data-event]');
-    if(link){const r=records.find(r=>r.id===link.dataset.event);if(r)r.read=true;save();toggle(false);render();return;}
+    if(link){const r=records.find(r=>r.id===link.dataset.event);if(r){markRead([r.id]);
+      // #10: şikâyet bildirimi doğrudan o şikâyetin dosyasını açar.
+      if(r.key==='sikayet'&&r.kayit&&r.kaynak&&window.PuffyModeration?.showCase)setTimeout(()=>{if(ctx)window.PuffyModeration.showCase(r.kaynak,r.kayit);},400);}
+      toggle(false);render();return;}
     const button=e.target.closest('[data-notice]');if(!button)return;
     switch(button.dataset.notice){
       case 'pending':toggle(false);break;
       case 'close':toggle(false);$('#approval-bell').focus();break;
-      case 'read-all':records.forEach(r=>r.read=true);save();render();break;
+      case 'read-all':markRead(records.filter(r=>!r.read).map(r=>r.id));break;
       case 'test':await play(true);renderStatus();break;
       case 'desktop':{
         const token=generation;button.disabled=true;
@@ -101,7 +140,9 @@
     finally{if(token===generation){arming=false;renderStatus();}}
   }
   async function play(test=false){
-    if(!test&&(!sound||Date.now()-lastTone<4000))return;
+    const toneKey=ctx?.user?.id?'puffy_notifications_tone:'+ctx.user.id:null;
+    if(!test){let shared=0;try{shared=Number(localStorage.getItem(toneKey))||0;}catch{}
+      if(!sound||Date.now()-Math.max(lastTone,shared)<4000)return;}
     const token=generation;
     try{
       const Audio=window.AudioContext||window.webkitAudioContext;
@@ -110,7 +151,7 @@
       if(test&&audio.state==='suspended')await audio.resume();
       if(token!==generation||!ctx)return;
       if(audio.state!=='running'){audioState='Ses hazır değil · Sesi dene düğmesine bas.';renderStatus();return;}
-      lastTone=Date.now();
+      lastTone=Date.now();if(!test&&toneKey)try{localStorage.setItem(toneKey,String(lastTone));}catch{}
       for(const [offset,hz] of [[0,660],[.2,880]]){
         const osc=audio.createOscillator(),gain=audio.createGain(),start=audio.currentTime+offset;
         osc.frequency.value=hz;gain.gain.setValueAtTime(0,start);gain.gain.linearRampToValueAtTime(volume*.25,start+.025);gain.gain.exponentialRampToValueAtTime(.001,start+.3);
@@ -123,12 +164,16 @@
   function accept(batch){
     if(!ctx)return;
     const seen=new Set(records.map(r=>r.id)),fresh=[];
-    for(const row of batch.rows||[]){const id=String(row.id);if(!validId(id)||(cursor!==null&&BigInt(id)<=BigInt(cursor))||seen.has(id)||!options.allowed(row.tur))continue;seen.add(id);fresh.push({id,key:row.tur,at:Number.isFinite(Date.parse(row.created_at))?row.created_at:new Date().toISOString(),read:false});}
+    for(const row of batch.rows||[]){const id=String(row.id);if(!validId(id)||(cursor!==null&&BigInt(id)<=BigInt(cursor))||seen.has(id)||!options.allowed(row.tur))continue;seen.add(id);fresh.push({id,key:row.tur,at:Number.isFinite(Date.parse(row.created_at))?row.created_at:new Date().toISOString(),read:row.okundu===true,kayit:cleanRef(row.kayit),kaynak:cleanRef(row.kaynak)});}
     records=[...fresh.reverse(),...records].slice(0,100);
     if(validId(String(batch.cursor))&&(cursor===null||BigInt(batch.cursor)>BigInt(cursor)))cursor=String(batch.cursor);
     save();render();
-    if(!fresh.length||batch.bootstrap===true)return;
-    const text=fresh.length===1?options.label(fresh[0].key):fresh.length+' yeni başvuru';
+    if(batch.bootstrap===true)return;
+    // #12: birikmiş olaylar birkaç sayfada gelir; tek özet uyarısı son sayfada çıkar.
+    const unseen=fresh.filter(r=>!r.read);alertCount+=unseen.length;if(unseen.length&&!alertKey)alertKey=unseen[0].key;
+    if(batch.more===true||!alertCount)return;
+    const total=alertCount,firstKey=alertKey;alertCount=0;alertKey=null;
+    const text=total===1?options.label(firstKey):total+' yeni başvuru';
     $('#approval-alert')?.remove();
     const banner=document.createElement('div');banner.id='approval-alert';banner.className='approval-alert notice-banner';banner.setAttribute('role','status');
     banner.innerHTML=`<div><strong>Yeni başvuru var</strong><span>${ctx.esc(text)} · İncelemeni bekliyor</span></div><button data-open>Bildirimleri gör →</button><button data-dismiss aria-label="Uyarıyı kapat">×</button>`;
@@ -146,7 +191,7 @@
     $('#approval-bell').classList.toggle('has-unread',pending>0);
     $('#approval-bell').setAttribute('aria-label',pending+' karar bekliyor, '+unread+' okunmamış bildirim');
     $('#notice-unread').textContent=unread+' okunmamış';$('#notice-pending').textContent=pending+' karar bekliyor →';
-    $('#notice-list').innerHTML=records.length?records.map(r=>`<a class="notice-item ${r.read?'':'is-unread'}" data-event="${r.id}" href="${options.path(r.key)}"><span class="notice-dot" aria-hidden="true"></span><span><strong>${ctx.esc(options.label(r.key))}</strong><small>${ctx.esc(ctx.date(r.at))} · ${r.read?'Okundu':'Yeni başvuru'}</small></span><span aria-hidden="true">↗</span></a>`).join(''):'<div class="notice-empty"><strong>Yeni bildirim yok</strong><p>Yeni başvurular burada birikir. Bekleyen işleri Onaylar bölümünden inceleyebilirsin.</p></div>';
+    $('#notice-list').innerHTML=records.length?records.map(r=>`<a class="notice-item ${r.read?'':'is-unread'}" data-event="${r.id}" href="${options.path(r.key,r)}"><span class="notice-dot" aria-hidden="true"></span><span><strong>${ctx.esc(options.label(r.key))}</strong><small>${ctx.esc(ctx.date(r.at))} · ${r.read?'Okundu':'Yeni başvuru'}</small></span><span aria-hidden="true">↗</span></a>`).join(''):'<div class="notice-empty"><strong>Yeni bildirim yok</strong><p>Yeni başvurular burada birikir. Bekleyen işleri Onaylar bölümünden inceleyebilirsin.</p></div>';
     $('#approval-events [data-notice="read-all"]').disabled=!unread;
     document.title=(unread?'('+unread+') ':'')+'Puffy Yönetim';renderStatus();
   }

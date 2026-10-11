@@ -2,10 +2,13 @@
 <html lang="tr">
 <head>
 <meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net 'sha256-5DiN52SOBiMELk59jJR5S/0ejfxCNw9otZRBJacjAEE='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: blob: https:; media-src 'self' blob: https:; connect-src 'self' https://rjdddbwotczhagdulwco.supabase.co wss://rjdddbwotczhagdulwco.supabase.co; font-src 'self' data: https://fonts.gstatic.com; object-src 'none'; base-uri 'none'; form-action 'self'; frame-src 'none'; worker-src 'self' blob:">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
 <title>Puffy Yönetim</title>
 <link rel="icon" href="data:,">
+<meta name="referrer" content="no-referrer">
+<style id="cerceve-kilidi">html{display:none}</style>
 <style>
 :root{--bg:#0A0C11;--panel:#141821;--panel2:#1B2030;--gold:#D9B86A;--gold2:#8A6E30;--cream:#ECE1C8;--cream60:rgba(236,225,200,.6);--red:#E57373;--green:#4ADE80;--line:rgba(217,184,106,.22)}
 *{box-sizing:border-box}
@@ -69,6 +72,7 @@ button.daha{display:block;width:100%;margin:10px 0;padding:10px;border-radius:10
 </style>
 <link rel="stylesheet" href="style.css?v=20261009c">
 <link rel="stylesheet" href="iletisim.css?v=20261010a">
+<link rel="stylesheet" href="rapor.css?v=20261012rapor">
 </head>
 <body>
 
@@ -176,29 +180,34 @@ button.daha{display:block;width:100%;margin:10px 0;padding:10px;border-radius:10
 <script src="vendor/supabase-2.57.4.min.js" integrity="sha384-AkNSQdptcXlJ0/NBZc4qGk86cDVXcCevwoWgEKIpHOEfbvlXGLlIkimQtONt8KNf"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>
+<script src="okunur.js?v=20261012rapor"></script>
+<script src="hata-izleme.js?v=20261012rapor"></script>
 <script src="guvenilirlik.js?v=20261008audit6"></script>
 <script src="phase2.js?v=20261008audit6"></script>
 <script src="phase3.js?v=20261008audit6"></script>
-<script src="moderasyon.js?v=20261012a"></script>
-<script src="odemeler.js?v=20261008audit6"></script>
+<script src="moderasyon.js?v=20261012rapor"></script>
+<script src="odemeler.js?v=20261012rapor"></script>
 <link rel="stylesheet" href="notifications.css?v=20261012notice3">
-<script src="notifications.js?v=20261012notice3"></script>
-<script src="approvals.js?v=20261012notice3"></script>
+<script src="notifications.js?v=20261012rapor"></script>
+<script src="approvals.js?v=20261012rapor"></script>
 <script src="icerik.js?v=20261008audit6"></script>
 <script src="topluluklar.js?v=20261011a"></script>
-<script src="gozlem.js?v=20261008audit6"></script>
+<script src="gozlem.js?v=20261012rapor"></script>
 <script src="oyunlar.js?v=20261009a"></script>
 <script src="hediyeler.js?v=20261008audit6"></script>
 <script src="anlar.js?v=20261009a"></script>
 <script src="bakim.js?v=20261009a"></script>
 <script src="oyun-ayari.js?v=20261008audit6"></script>
-<script src="ayarlar.js?v=20261008audit6"></script>
-<script src="finans-istek.js?v=20261008audit6"></script>
-<script src="kapsam.js?v=20261010a"></script>
+<script src="ayarlar.js?v=20261012rapor"></script>
+<script src="finans-istek.js?v=20261012rapor"></script>
+<script src="kapsam.js?v=20261012rapor"></script>
 <script src="evidence.js?v=20261010c"></script>
 <script src="iletisim.js?v=20261010b"></script>
 <script src="phase1.js?v=20261010c"></script>
 <script>
+// #05 (2026-10-11): başka sitenin çerçevesinde açılırsa panel gösterilmez (clickjacking).
+if(window.top===window.self){document.getElementById('cerceve-kilidi')?.remove();}else{try{window.top.location=window.location.href;}catch(_){}}
+document.addEventListener('error',e=>{const t=e.target;if(t&&t.matches&&t.matches('img[data-gizle-hata]'))t.style.visibility='hidden';},true);
 const SB_URL = 'https://rjdddbwotczhagdulwco.supabase.co';
 const SB_KEY = 'sb_publishable_TMb-Ldq66Pi3ehxPSYB8JA_aQ-zEeHd';
 // Oturum güvenliği (Claude, 2026-10-02): oturum yalnız bu sekmede tutulur
@@ -207,6 +216,7 @@ const SB_KEY = 'sb_publishable_TMb-Ldq66Pi3ehxPSYB8JA_aQ-zEeHd';
 const OTURUM_BOSTA_MS = 30*60*1000, OTURUM_AZAMI_MS = 12*60*60*1000;
 try { Object.keys(localStorage).filter(k=>k.startsWith('sb-')&&k.endsWith('-auth-token')).forEach(k=>localStorage.removeItem(k)); } catch(_){}
 const sb = supabase.createClient(SB_URL, SB_KEY, { auth: { storage: window.sessionStorage, persistSession: true, autoRefreshToken: true } });
+window.PuffyHata?.wrap(sb);
 // 2026-10-10 (Hakan: "Şikayetler hep Yükleniyor…"): supabase-js 2.57 sorgu nesnesinin yalnız then'i var, catch'i yok.
 // sb.rpc(...).catch(...) kalıbı (Şikayetler, Shorts, şikayet kararı) TypeError verip sayfayı "Yükleniyor…"da bırakıyordu.
 (()=>{try{let p=Object.getPrototypeOf(sb.rpc('__catch_yoklama__'));while(p&&!Object.prototype.hasOwnProperty.call(p,'then'))p=Object.getPrototypeOf(p);
@@ -312,6 +322,7 @@ async function panelAc(){
   if(!access.allowed){ hata('Bu hesapta panel erişim yetkisi yok.'); await sb.auth.signOut({ scope: 'local' }); goster('giris'); return; }
   panelCaps=access.caps; panelSession=user.id;
   PuffyPhase1.open({sb,user,caps:panelCaps});
+  window.PuffyHata?.init({sb,caps:panelCaps});
   $('#giris').classList.add('hidden'); $('#uyg').classList.remove('hidden');
   sayfaGit(location.hash.replace('#','') || 'ozet');
   ozetYukle();
@@ -336,7 +347,7 @@ $('#kod-kur').addEventListener('keydown', e=>{ if(e.key==='Enter') $('#btn-kur')
 $('#sifre').addEventListener('keydown', e=>{ if(e.key==='Enter') $('#btn-eposta').click(); });
 // Önce EKRAN kilitlenir, sonra oturum kapatılır: signOut hata verse bile
 // hassas sayfa açık kalmasın (Codex raporu P1, 2026-10-11).
-async function cikis(){ try{PuffyPhase1.close();}catch(_){} panelCaps={};panelSession=null;try{sessionStorage.removeItem('puffy_mfa');sessionStorage.removeItem('puffy_giris_zamani');sessionStorage.removeItem('puffy_son_hareket');}catch(_){} location.hash=''; $('#uyg').classList.add('hidden'); $('#giris').classList.remove('hidden'); goster('giris'); let hataVar=false; try{const {error}=await sb.auth.signOut({ scope: 'local' }); hataVar=!!error;}catch(_){hataVar=true;} if(hataVar){ try{for(const k of Object.keys(localStorage)){if(k.startsWith('sb-'))localStorage.removeItem(k);}}catch(_){} toast('Oturum bu cihazda kapatıldı; sunucu çıkışı tamamlanamadı.'); } }
+async function cikis(){ try{PuffyPhase1.close();}catch(_){} try{window.PuffyHata?.stop();}catch(_){} panelCaps={};panelSession=null;try{sessionStorage.removeItem('puffy_mfa');sessionStorage.removeItem('puffy_giris_zamani');sessionStorage.removeItem('puffy_son_hareket');}catch(_){} location.hash=''; $('#uyg').classList.add('hidden'); $('#giris').classList.remove('hidden'); goster('giris'); let hataVar=false; try{const {error}=await sb.auth.signOut({ scope: 'local' }); hataVar=!!error;}catch(_){hataVar=true;} if(hataVar){ try{for(const k of Object.keys(localStorage)){if(k.startsWith('sb-'))localStorage.removeItem(k);}}catch(_){} toast('Oturum bu cihazda kapatıldı; sunucu çıkışı tamamlanamadı.'); } }
 $('#btn-cikis').onclick = cikis; $('#btn-cikis-giris').onclick = cikis;
 
 // ---------- SAYFALAR ----------
@@ -344,6 +355,7 @@ function sayfaGit(ad){
   queueGate.invalidate();
   if(!panelSession) return;
   ad = ad || 'ozet';
+  if(window.PuffyHata&&PuffyHata.route(ad)){PuffyPhase1.route(ad);return;}
   if(window.PuffyModeration&&PuffyModeration.route(ad)){PuffyPhase1.route(ad);return;}
   if(window.PuffyOdemeler&&PuffyOdemeler.route(ad)){PuffyPhase1.route(ad);return;}
   if(window.PuffyHediyeler&&PuffyHediyeler.route(ad)){PuffyPhase1.route(ad);return;}
@@ -442,7 +454,7 @@ async function sikayetYukle(devam){
     const d=document.createElement('div'); d.className='kutu';
     const kaldirilabilir = ['short','moment','short_comment'].includes(r.icerik_turu);
     d.innerHTML=`<div class="satir">
-      <img class="avatar" src="${esc(r.hedef_avatar||'')}" onerror="this.style.visibility='hidden'">
+      <img class="avatar" src="${esc(r.hedef_avatar||'')}" data-gizle-hata>
       <div style="flex:1">
         <div><span class="etiket ${r.sebep==='child_safety'?'kirmizi':''}">${esc(SEBEP[r.sebep]||r.sebep||'')}</span><span class="meta">${tarih(r.olusturuldu)}</span></div>
         <div style="margin-top:6px"><b>${esc(r.hedef_ad||'—')}</b> <span class="meta">hakkında · şikayet eden: ${esc(r.sikayet_eden_ad||'—')}</span></div>

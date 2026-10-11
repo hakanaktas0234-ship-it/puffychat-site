@@ -4,8 +4,21 @@
  const operations=new Set(['platform_coin_islemi','platform_vip_ver','platform_bayi_stok_islemi','yonetim_odeme_islemi']);
  const canonical=x=>JSON.stringify(x,(_,v)=>v&&typeof v==='object'&&!Array.isArray(v)?Object.fromEntries(Object.keys(v).sort().map(k=>[k,v[k]])):v);
  const clean=p=>Object.fromEntries(Object.entries(p).filter(([k])=>!['p_odeme_sifresi','p_request_id'].includes(k)));
+ // #04 (2026-10-11): günlük sekme kapanınca kaybolmasın. sessionStorage verilirse
+ // kalıcı localStorage kullanılır; o sekmede kalan eski kayıtlar bir kez taşınır.
+ // Şifre ve istek kimliği dışı gizli alan saklanmaz (clean). Sunucu tarafı kurtarma:
+ // yonetim_son_isteklerim (Ödeme takibi → Son finans isteklerim).
+ function durable(storage,key){
+  try{
+   const local=root.localStorage,session=root.sessionStorage;
+   if(!local||storage!==session)return storage;
+   const old=session.getItem(key);
+   if(old){const a=JSON.parse(old),b=JSON.parse(local.getItem(key)||'[]');if(Array.isArray(a)&&Array.isArray(b)){const ids=new Set(b.map(r=>r.id));local.setItem(key,JSON.stringify([...b,...a.filter(r=>!ids.has(r.id))]));}session.removeItem(key);}
+   return local;
+  }catch{return storage;}
+ }
  class Journal {
-  constructor(storage,user){this.storage=storage;this.key='puffy.finans.v1.'+user;}
+  constructor(storage,user){this.key='puffy.finans.v1.'+user;this.storage=durable(storage,this.key);}
   list(){const data=JSON.parse(this.storage.getItem(this.key)||'[]');if(!Array.isArray(data))throw new Error('REQUEST_JOURNAL_INVALID');return data;}
   save(rows){this.storage.setItem(this.key,JSON.stringify(rows));}
   prepare(name,params){
