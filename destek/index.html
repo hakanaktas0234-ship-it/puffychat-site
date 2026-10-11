@@ -78,6 +78,19 @@
   <p>Şunları eklersen çok daha hızlı çözeriz: kullanıcı numaran (Puffy ID), ne yapmaya
      çalıştığın, ne olduğu, varsa ekran görüntüsü ve telefon modelin.</p>
   <p><a class="dugme" href="mailto:destek@puffychat.com">destek@puffychat.com</a></p>
+
+  <h2>Destek formu</h2>
+  <form id="destek-formu" class="kutu" novalidate>
+    <p><label>Adın<br><input name="ad" maxlength="80" autocomplete="name" style="width:100%"></label></p>
+    <p><label>E-posta adresin *<br><input name="eposta" type="email" required maxlength="200" autocomplete="email" style="width:100%"></label></p>
+    <p><label>Konu *<br><input name="konu" required minlength="3" maxlength="160" style="width:100%"></label></p>
+    <p><label>Mesajın * (Puffy ID'ni de yaz)<br><textarea name="mesaj" required minlength="10" maxlength="4000" rows="6" style="width:100%"></textarea></label></p>
+    <p style="position:absolute;left:-9999px" aria-hidden="true"><label>Web sitesi<input name="web" tabindex="-1" autocomplete="off"></label></p>
+    <p><button class="dugme" type="submit">Gönder</button></p>
+    <p data-durum role="status"></p>
+    <p style="font-size:13px;opacity:.75">Gönderdiğin bilgiler yalnız talebini yanıtlamak için kullanılır. Ayrıntı: <a href="/gizlilik/">Gizlilik Politikası</a>.</p>
+  </form>
+  <script src="/destek/form.js?v=20261012"></script>
 </div></main>
 
 <footer><div class="kabuk">

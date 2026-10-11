@@ -3,7 +3,7 @@
   'use strict';
   let ctx, options, storageKey, preferenceKey, records=[], cursor=null, audio, lastTone=0;
   let sound=false, volume=0.45, storageOK=true, connection='Bağlanıyor', pending=0;
-  let arming=false,alertCount=0,alertKey=null,lastSync=0;
+  let arming=false,alertCount=0,alertKey=null,lastSync=0,pushText='';
   let audioState='Ses kapalı', desktopError='', generation=0;
   const $=s=>document.querySelector(s);
   const validId=x=>typeof x==='string' && /^\d{1,20}$/.test(x);
@@ -83,7 +83,7 @@
     preferenceKey=c.user?.id?'puffy_notification_preferences_v1:'+c.user.id:null;
     if(storageKey){read();readPreferences();}else storageOK=false;
     audioState=sound?'Ses beklemede · Panelde bir kez tıkla.':'Ses kapalı';
-    $('#panel-topbar').insertAdjacentHTML('beforeend',`<div id="approval-bell-wrap"><button id="approval-bell" aria-expanded="false" aria-controls="approval-events"><svg class="notice-bell-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/><path d="M10 21h4"/></svg> <span class="notice-bell-label">Bildirimler</span> <b id="approval-total">0</b></button><button id="notice-audio-ready" type="button"></button><section id="approval-events" class="hidden notice-center" aria-label="Bildirim merkezi"><header class="notice-head"><div><span class="notice-eyebrow">PUFFY / YÖNETİM</span><h2>Bildirim merkezi</h2></div><button data-notice="close" aria-label="Bildirim merkezini kapat">×</button></header><div class="notice-summary"><span id="notice-unread"></span><a id="notice-pending" href="#onay/bekleyenler" data-notice="pending"></a></div><p id="notice-connection" role="status"></p><div class="notice-tools"><strong>Son başvurular</strong><button data-notice="read-all">Tümünü okundu işaretle</button></div><div id="notice-list"></div><details class="notice-settings" ${sound?'':'open'}><summary>Ses ve masaüstü ayarları</summary><label class="notice-toggle"><input type="checkbox" id="notice-sound"> Bildirim sesi</label><div class="notice-audio"><label for="notice-volume">Ses düzeyi</label><input id="notice-volume" type="range" min="10" max="100" step="5"><button data-notice="test">Sesi dene</button></div><p id="notice-audio-state" role="status"></p><div class="notice-desktop"><span id="notice-permission"></span><button data-notice="desktop">Masaüstü bildirimlerini aç</button></div><p id="notice-desktop-error" role="status"></p></details><footer id="notice-storage"></footer></section></div>`);
+    $('#panel-topbar').insertAdjacentHTML('beforeend',`<div id="approval-bell-wrap"><button id="approval-bell" aria-expanded="false" aria-controls="approval-events"><svg class="notice-bell-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/><path d="M10 21h4"/></svg> <span class="notice-bell-label">Bildirimler</span> <b id="approval-total">0</b></button><button id="notice-audio-ready" type="button"></button><section id="approval-events" class="hidden notice-center" aria-label="Bildirim merkezi"><header class="notice-head"><div><span class="notice-eyebrow">PUFFY / YÖNETİM</span><h2>Bildirim merkezi</h2></div><button data-notice="close" aria-label="Bildirim merkezini kapat">×</button></header><div class="notice-summary"><span id="notice-unread"></span><a id="notice-pending" href="#onay/bekleyenler" data-notice="pending"></a></div><p id="notice-connection" role="status"></p><div class="notice-tools"><strong>Son başvurular</strong><button data-notice="read-all">Tümünü okundu işaretle</button></div><div id="notice-list"></div><details class="notice-settings" ${sound?'':'open'}><summary>Ses ve masaüstü ayarları</summary><label class="notice-toggle"><input type="checkbox" id="notice-sound"> Bildirim sesi</label><div class="notice-audio"><label for="notice-volume">Ses düzeyi</label><input id="notice-volume" type="range" min="10" max="100" step="5"><button data-notice="test">Sesi dene</button></div><p id="notice-audio-state" role="status"></p><div class="notice-desktop"><span id="notice-permission"></span><button data-notice="desktop">Masaüstü bildirimlerini aç</button></div><p id="notice-desktop-error" role="status"></p><div class="notice-desktop"><span id="notice-push-state">Panel kapalıyken bildirim kapalı.</span><button data-notice="push">Panel kapalıyken de bildir</button></div></details><footer id="notice-storage"></footer></section></div>`);
     $('#approval-bell').onclick=()=>toggle();
     $('#notice-audio-ready').onclick=async()=>{sound=true;$('#notice-sound').checked=true;savePreferences();save();await play(true);};
     $('#approval-events').addEventListener('click',action);
@@ -94,6 +94,7 @@
     document.addEventListener('pointerdown',outside);document.addEventListener('keydown',keyboard);
     window.addEventListener('focus',onFocus);window.addEventListener('storage',onStorage);
     render();void syncRead(true);
+    if(window.PuffyPush){const token=generation;window.PuffyPush.durum().then(d=>{if(token===generation&&ctx){pushText=d.metin;$('#approval-events [data-notice="push"]').textContent=d.acik?'Bu cihazda kapat':'Panel kapalıyken de bildir';renderStatus();}}).catch(()=>{});}
   }
   function stop(){
     generation++;arming=false;document.removeEventListener('pointerdown',armAudio);document.removeEventListener('keydown',armAudio);document.removeEventListener('pointerdown',outside);document.removeEventListener('keydown',keyboard);window.removeEventListener('focus',onFocus);window.removeEventListener('storage',onStorage);
@@ -120,6 +121,13 @@
       case 'close':toggle(false);$('#approval-bell').focus();break;
       case 'read-all':markRead(records.filter(r=>!r.read).map(r=>r.id));break;
       case 'test':await play(true);renderStatus();break;
+      case 'push':{
+        // #11: panel kapalıyken bu cihaza bildirim (içeriksiz; metni service worker yazar).
+        if(!window.PuffyPush)break;const token=generation;button.disabled=true;
+        try{const d=await window.PuffyPush.toggle(ctx);if(token===generation){pushText=d.metin;button.textContent=d.acik?'Bu cihazda kapat':'Panel kapalıyken de bildir';}}
+        catch(err){if(token===generation)pushText=String(err?.message||err).includes('PERMISSION')?'Bildirim izni verilmedi.':'Açılamadı: '+(ctx?.errorText?ctx.errorText(err):String(err));}
+        if(token===generation&&ctx){button.disabled=false;renderStatus();}break;
+      }
       case 'desktop':{
         const token=generation;button.disabled=true;
         try{if(permission()!=='unsupported')await Notification.requestPermission();}catch{if(token===generation)desktopError='İzin isteği açılamadı. Tarayıcı site ayarlarını kontrol et.';}
@@ -206,6 +214,7 @@
     const p=permission();$('#notice-permission').textContent={granted:'Masaüstü bildirimi açık',denied:'Bildirim izni engelli · Tarayıcı site ayarlarından aç.',default:'Masaüstü bildirimi için izin gerekli',unsupported:'Bu tarayıcı masaüstü bildirimini desteklemiyor.'}[p];
     $('#approval-events [data-notice="desktop"]').hidden=p==='granted'||p==='unsupported'||p==='denied';
     $('#notice-desktop-error').textContent=desktopError;
+    if(pushText)$('#notice-push-state').textContent=pushText;
     $('#notice-storage').textContent=storageOK?'Son 100 bildirim · Bu tarayıcıda, hesabına özel · Panel kapalıyken masaüstü uyarısı gönderilmez.':'Geçmiş kaydedilemiyor. Bildirimler yalnız bu oturumda tutulacak.';
   }
   function status(text){connection=text;renderStatus();}

@@ -1,0 +1,6 @@
+zego-web-3.12.240.js — Zego Express Web SDK tek dosya paketi (panelden sessiz oda dinleme, Codex raporu #23)
+Kaynak: npm zego-express-engine-webrtc@3.12.240 (ISC) + bağımlılıkları: localforage@1.10.0 (Apache-2.0),
+long@5.2.0 (Apache-2.0), protobufjs@7 (BSD-3-Clause), zego-express-logger@1.5.0, pako (MIT).
+Paketleme: esbuild 0.24.0 --bundle --minify --format=iife (window.ZegoExpressEngine). Lisans metinleri dosyanın sonunda.
+SHA-256: 521ef00d9763b10e38a5cddb28cff0db4274b6d5524d82c43a34dfd3412de76e
+Neden yerel: CSP yalnız 'self' betiklere izin veriyor; CDN'deki UMD sürümü global bağımlılık istiyor.

@@ -2,7 +2,7 @@
 <html lang="tr">
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net 'sha256-5DiN52SOBiMELk59jJR5S/0ejfxCNw9otZRBJacjAEE='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: blob: https:; media-src 'self' blob: https:; connect-src 'self' https://rjdddbwotczhagdulwco.supabase.co wss://rjdddbwotczhagdulwco.supabase.co; font-src 'self' data: https://fonts.gstatic.com; object-src 'none'; base-uri 'none'; form-action 'self'; frame-src 'none'; worker-src 'self' blob:">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net 'sha256-0fPQW8T/zciTncQnxgUL0xIQm3Nw7LFy0d8EzweLWZU='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: blob: https:; media-src 'self' blob: https:; connect-src 'self' https://rjdddbwotczhagdulwco.supabase.co wss://rjdddbwotczhagdulwco.supabase.co https://*.zego.im wss://*.zego.im https://*.zegocloud.com wss://*.zegocloud.com https://*.coolzcloud.com wss://*.coolzcloud.com https://*.coolbcloud.com wss://*.coolbcloud.com https://*.cooldcloud.com wss://*.cooldcloud.com https://*.coolfcloud.com wss://*.coolfcloud.com https://*.coolgcloud.com wss://*.coolgcloud.com; font-src 'self' data: https://fonts.gstatic.com; object-src 'none'; base-uri 'none'; form-action 'self'; frame-src 'none'; worker-src 'self' blob:">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
 <title>Puffy Yönetim</title>
@@ -72,7 +72,7 @@ button.daha{display:block;width:100%;margin:10px 0;padding:10px;border-radius:10
 </style>
 <link rel="stylesheet" href="style.css?v=20261009c">
 <link rel="stylesheet" href="iletisim.css?v=20261010a">
-<link rel="stylesheet" href="rapor.css?v=20261012rapor">
+<link rel="stylesheet" href="rapor.css?v=20261012rapor2">
 </head>
 <body>
 
@@ -182,14 +182,18 @@ button.daha{display:block;width:100%;margin:10px 0;padding:10px;border-radius:10
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>
 <script src="okunur.js?v=20261012rapor"></script>
 <script src="hata-izleme.js?v=20261012rapor"></script>
+<script src="push.js?v=20261012rapor2"></script>
+<script src="yan-hesap.js?v=20261012rapor2"></script>
+<script src="destek.js?v=20261012rapor2"></script>
+<script src="oda-dinle.js?v=20261012rapor2"></script>
 <script src="guvenilirlik.js?v=20261008audit6"></script>
 <script src="phase2.js?v=20261008audit6"></script>
 <script src="phase3.js?v=20261008audit6"></script>
 <script src="moderasyon.js?v=20261012rapor"></script>
 <script src="odemeler.js?v=20261012rapor"></script>
 <link rel="stylesheet" href="notifications.css?v=20261012notice3">
-<script src="notifications.js?v=20261012rapor"></script>
-<script src="approvals.js?v=20261012rapor"></script>
+<script src="notifications.js?v=20261012rapor2"></script>
+<script src="approvals.js?v=20261012rapor2"></script>
 <script src="icerik.js?v=20261008audit6"></script>
 <script src="topluluklar.js?v=20261011a"></script>
 <script src="gozlem.js?v=20261012rapor"></script>
@@ -323,6 +327,8 @@ async function panelAc(){
   panelCaps=access.caps; panelSession=user.id;
   PuffyPhase1.open({sb,user,caps:panelCaps});
   window.PuffyHata?.init({sb,caps:panelCaps});
+  window.PuffyYanHesap?.init({sb,caps:panelCaps});
+  window.PuffyDestek?.init({sb,caps:panelCaps});
   $('#giris').classList.add('hidden'); $('#uyg').classList.remove('hidden');
   sayfaGit(location.hash.replace('#','') || 'ozet');
   ozetYukle();
@@ -347,7 +353,7 @@ $('#kod-kur').addEventListener('keydown', e=>{ if(e.key==='Enter') $('#btn-kur')
 $('#sifre').addEventListener('keydown', e=>{ if(e.key==='Enter') $('#btn-eposta').click(); });
 // Önce EKRAN kilitlenir, sonra oturum kapatılır: signOut hata verse bile
 // hassas sayfa açık kalmasın (Codex raporu P1, 2026-10-11).
-async function cikis(){ try{PuffyPhase1.close();}catch(_){} try{window.PuffyHata?.stop();}catch(_){} panelCaps={};panelSession=null;try{sessionStorage.removeItem('puffy_mfa');sessionStorage.removeItem('puffy_giris_zamani');sessionStorage.removeItem('puffy_son_hareket');}catch(_){} location.hash=''; $('#uyg').classList.add('hidden'); $('#giris').classList.remove('hidden'); goster('giris'); let hataVar=false; try{const {error}=await sb.auth.signOut({ scope: 'local' }); hataVar=!!error;}catch(_){hataVar=true;} if(hataVar){ try{for(const k of Object.keys(localStorage)){if(k.startsWith('sb-'))localStorage.removeItem(k);}}catch(_){} toast('Oturum bu cihazda kapatıldı; sunucu çıkışı tamamlanamadı.'); } }
+async function cikis(){ try{PuffyPhase1.close();}catch(_){} try{window.PuffyHata?.stop();window.PuffyYanHesap?.stop();window.PuffyDestek?.stop();window.PuffyOdaDinle?.kapat();}catch(_){} panelCaps={};panelSession=null;try{sessionStorage.removeItem('puffy_mfa');sessionStorage.removeItem('puffy_giris_zamani');sessionStorage.removeItem('puffy_son_hareket');}catch(_){} location.hash=''; $('#uyg').classList.add('hidden'); $('#giris').classList.remove('hidden'); goster('giris'); let hataVar=false; try{const {error}=await sb.auth.signOut({ scope: 'local' }); hataVar=!!error;}catch(_){hataVar=true;} if(hataVar){ try{for(const k of Object.keys(localStorage)){if(k.startsWith('sb-'))localStorage.removeItem(k);}}catch(_){} toast('Oturum bu cihazda kapatıldı; sunucu çıkışı tamamlanamadı.'); } }
 $('#btn-cikis').onclick = cikis; $('#btn-cikis-giris').onclick = cikis;
 
 // ---------- SAYFALAR ----------
@@ -356,6 +362,8 @@ function sayfaGit(ad){
   if(!panelSession) return;
   ad = ad || 'ozet';
   if(window.PuffyHata&&PuffyHata.route(ad)){PuffyPhase1.route(ad);return;}
+  if(window.PuffyYanHesap&&PuffyYanHesap.route(ad)){PuffyPhase1.route(ad);return;}
+  if(window.PuffyDestek&&PuffyDestek.route(ad)){PuffyPhase1.route(ad);return;}
   if(window.PuffyModeration&&PuffyModeration.route(ad)){PuffyPhase1.route(ad);return;}
   if(window.PuffyOdemeler&&PuffyOdemeler.route(ad)){PuffyPhase1.route(ad);return;}
   if(window.PuffyHediyeler&&PuffyHediyeler.route(ad)){PuffyPhase1.route(ad);return;}
