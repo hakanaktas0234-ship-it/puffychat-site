@@ -7,3 +7,6 @@
 
 /* Zil ve bekleyen karar rozeti her platformda aynı görünür. */
 #approval-bell{position:relative;padding:10px 16px;overflow:visible;color:var(--cream)}#approval-bell .notice-bell-icon{display:block;width:22px;height:22px;flex:none;color:var(--cream)}#approval-bell #approval-total{position:absolute;top:-7px;right:-7px;display:grid;place-items:center;min-width:22px;height:22px;box-sizing:border-box;padding:0 5px;border:2px solid var(--bg);background:#e89157;color:#21150d;font-size:11px;font-weight:800;line-height:1;border-radius:999px}#approval-events #notice-pending{display:inline-flex;align-items:center;min-height:36px;padding:4px 9px;border:1px solid var(--gold);border-radius:7px;color:var(--gold);font-size:12px;font-weight:600;text-decoration:none}#approval-events #notice-pending:hover{background:#e8915718}.notice-summary{align-items:center;gap:12px}
+
+/* Ses durumu menü kapalıyken de görünür. */
+#approval-bell-wrap{display:flex;align-items:center;gap:9px}#notice-audio-ready{font-size:11px;min-height:34px;padding:6px 9px;color:var(--cream60);white-space:nowrap}#notice-audio-ready.needs-action{color:var(--gold);border-color:var(--gold);background:#e8915712}

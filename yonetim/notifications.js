@@ -1,8 +1,9 @@
 /* Yöneticiye özel, bu tarayıcıda saklanan başvuru bildirimleri. */
 (() => {
   'use strict';
-  let ctx, options, storageKey, records=[], cursor=null, audio, lastTone=0;
+  let ctx, options, storageKey, preferenceKey, records=[], cursor=null, audio, lastTone=0;
   let sound=false, volume=0.45, storageOK=true, connection='Bağlanıyor', pending=0;
+  let arming=false;
   let audioState='Ses kapalı', desktopError='', generation=0;
   const $=s=>document.querySelector(s);
   const validId=x=>typeof x==='string' && /^\d{1,20}$/.test(x);
@@ -16,6 +17,24 @@
       records=(Array.isArray(s.records)?s.records:[]).filter(r=>validId(r.id)&&options.allowed(r.key)&&Number.isFinite(Date.parse(r.at))&&Date.parse(r.at)>Date.now()-30*86400000).slice(0,100).map(r=>({id:r.id,key:r.key,at:r.at,read:r.read===true}));
     } catch { storageOK=false; }
   }
+  function readPreferences(){
+    try {
+      let p=JSON.parse(localStorage.getItem(preferenceKey)||'null');
+      // Eski sürüm tercihi yetki listesine bağlıydı. Yeni bir kuyruk eklenince kaybetme.
+      if(!p && typeof localStorage.key==='function'){
+        const prefix='puffy_notifications_v1:'+ctx.user.id+':';
+        for(let i=0;i<localStorage.length;i++){
+          const key=localStorage.key(i);if(!key?.startsWith(prefix))continue;
+          try{const old=JSON.parse(localStorage.getItem(key)||'null');if(old?.sound===true){p=old;break;}}catch{}
+        }
+      }
+      if(p){sound=p.sound===true;volume=Number.isFinite(p.volume)?Math.min(1,Math.max(.1,p.volume)):.45;}
+    }catch{storageOK=false;}
+  }
+  function savePreferences(){
+    if(!preferenceKey)return;
+    try{localStorage.setItem(preferenceKey,JSON.stringify({sound,volume}));}catch{storageOK=false;}
+  }
   function save(){
     if(!storageKey)return;
     try {localStorage.setItem(storageKey,JSON.stringify({cursor,records,sound,volume}));storageOK=true;}
@@ -25,22 +44,25 @@
     stop();ctx=c;options=o;records=[];cursor=null;sound=false;volume=.45;storageOK=true;pending=0;connection='Bağlanıyor';desktopError='';lastTone=0;
     // Yetki kümesi değiştiğinde eski kapsamın cursor'u yeni kapsamı atlamasın.
     storageKey=c.user?.id?'puffy_notifications_v1:'+c.user.id+':'+o.keys.filter(o.allowed).sort().join(','):null;
-    if(storageKey)read();else storageOK=false;
-    audioState=sound?'Sesi etkinleştirmek için “Sesi dene”ye bas.':'Ses kapalı';
-    $('#panel-topbar').insertAdjacentHTML('beforeend',`<div id="approval-bell-wrap"><button id="approval-bell" aria-expanded="false" aria-controls="approval-events"><svg class="notice-bell-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/><path d="M10 21h4"/></svg> <span class="notice-bell-label">Bildirimler</span> <b id="approval-total">0</b></button><section id="approval-events" class="hidden notice-center" aria-label="Bildirim merkezi"><header class="notice-head"><div><span class="notice-eyebrow">PUFFY / YÖNETİM</span><h2>Bildirim merkezi</h2></div><button data-notice="close" aria-label="Bildirim merkezini kapat">×</button></header><div class="notice-summary"><span id="notice-unread"></span><a id="notice-pending" href="#onay/bekleyenler" data-notice="pending"></a></div><p id="notice-connection" role="status"></p><div class="notice-tools"><strong>Son başvurular</strong><button data-notice="read-all">Tümünü okundu işaretle</button></div><div id="notice-list"></div><details class="notice-settings" ${sound?'':'open'}><summary>Ses ve masaüstü ayarları</summary><label class="notice-toggle"><input type="checkbox" id="notice-sound"> Bildirim sesi</label><div class="notice-audio"><label for="notice-volume">Ses düzeyi</label><input id="notice-volume" type="range" min="10" max="100" step="5"><button data-notice="test">Sesi dene</button></div><p id="notice-audio-state" role="status"></p><div class="notice-desktop"><span id="notice-permission"></span><button data-notice="desktop">Masaüstü bildirimlerini aç</button></div><p id="notice-desktop-error" role="status"></p></details><footer id="notice-storage"></footer></section></div>`);
+    preferenceKey=c.user?.id?'puffy_notification_preferences_v1:'+c.user.id:null;
+    if(storageKey){read();readPreferences();}else storageOK=false;
+    audioState=sound?'Ses beklemede · Panelde bir kez tıkla.':'Ses kapalı';
+    $('#panel-topbar').insertAdjacentHTML('beforeend',`<div id="approval-bell-wrap"><button id="approval-bell" aria-expanded="false" aria-controls="approval-events"><svg class="notice-bell-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/><path d="M10 21h4"/></svg> <span class="notice-bell-label">Bildirimler</span> <b id="approval-total">0</b></button><button id="notice-audio-ready" type="button"></button><section id="approval-events" class="hidden notice-center" aria-label="Bildirim merkezi"><header class="notice-head"><div><span class="notice-eyebrow">PUFFY / YÖNETİM</span><h2>Bildirim merkezi</h2></div><button data-notice="close" aria-label="Bildirim merkezini kapat">×</button></header><div class="notice-summary"><span id="notice-unread"></span><a id="notice-pending" href="#onay/bekleyenler" data-notice="pending"></a></div><p id="notice-connection" role="status"></p><div class="notice-tools"><strong>Son başvurular</strong><button data-notice="read-all">Tümünü okundu işaretle</button></div><div id="notice-list"></div><details class="notice-settings" ${sound?'':'open'}><summary>Ses ve masaüstü ayarları</summary><label class="notice-toggle"><input type="checkbox" id="notice-sound"> Bildirim sesi</label><div class="notice-audio"><label for="notice-volume">Ses düzeyi</label><input id="notice-volume" type="range" min="10" max="100" step="5"><button data-notice="test">Sesi dene</button></div><p id="notice-audio-state" role="status"></p><div class="notice-desktop"><span id="notice-permission"></span><button data-notice="desktop">Masaüstü bildirimlerini aç</button></div><p id="notice-desktop-error" role="status"></p></details><footer id="notice-storage"></footer></section></div>`);
     $('#approval-bell').onclick=()=>toggle();
+    $('#notice-audio-ready').onclick=async()=>{sound=true;$('#notice-sound').checked=true;savePreferences();save();await play(true);};
     $('#approval-events').addEventListener('click',action);
     $('#notice-sound').checked=sound;$('#notice-volume').value=volume*100;
-    $('#notice-sound').onchange=async e=>{sound=e.target.checked;save();if(sound)await play(true);else audioState='Ses kapalı';renderStatus();};
-    $('#notice-volume').oninput=e=>{volume=Number(e.target.value)/100;save();};
+    $('#notice-sound').onchange=async e=>{sound=e.target.checked;savePreferences();save();if(sound)await play(true);else audioState='Ses kapalı';renderStatus();};
+    $('#notice-volume').oninput=e=>{volume=Number(e.target.value)/100;savePreferences();save();};
+    document.addEventListener('pointerdown',armAudio);document.addEventListener('keydown',armAudio);
     document.addEventListener('pointerdown',outside);document.addEventListener('keydown',keyboard);
     window.addEventListener('focus',renderStatus);
     render();
   }
   function stop(){
-    generation++;document.removeEventListener('pointerdown',outside);document.removeEventListener('keydown',keyboard);window.removeEventListener('focus',renderStatus);
+    generation++;arming=false;document.removeEventListener('pointerdown',armAudio);document.removeEventListener('keydown',armAudio);document.removeEventListener('pointerdown',outside);document.removeEventListener('keydown',keyboard);window.removeEventListener('focus',renderStatus);
     if(audio){audio.close().catch(()=>{});audio=null;}
-    $('#approval-bell-wrap')?.remove();$('#approval-alert')?.remove();ctx=null;storageKey=null;records=[];cursor=null;
+    $('#approval-bell-wrap')?.remove();$('#approval-alert')?.remove();ctx=null;storageKey=null;preferenceKey=null;records=[];cursor=null;
   }
   function toggle(force){
     const box=$('#approval-events');if(!box)return;
@@ -66,13 +88,25 @@
       }
     }
   }
+  async function armAudio(e){
+    if(!e.isTrusted||!sound||!ctx||arming||audio?.state==='running')return;
+    const token=generation;arming=true;
+    try{
+      const Audio=window.AudioContext||window.webkitAudioContext;
+      if(!Audio)throw new Error('unsupported');
+      if(!audio||audio.state==='closed'){audio=new Audio();audio.onstatechange=()=>renderStatus();}
+      if(audio.state!=='running')await audio.resume();
+      if(token===generation)audioState=audio.state==='running'?'Ses hazır':'Ses hazır değil · Sesi etkinleştir.';
+    }catch{if(token===generation)audioState='Ses açılamadı · Sesi dene düğmesini kullan.';}
+    finally{if(token===generation){arming=false;renderStatus();}}
+  }
   async function play(test=false){
     if(!test&&(!sound||Date.now()-lastTone<4000))return;
     const token=generation;
     try{
       const Audio=window.AudioContext||window.webkitAudioContext;
       if(!Audio)throw new Error('unsupported');
-      if(!audio||audio.state==='closed')audio=new Audio();
+      if(!audio||audio.state==='closed'){audio=new Audio();audio.onstatechange=()=>renderStatus();}
       if(test&&audio.state==='suspended')await audio.resume();
       if(token!==generation||!ctx)return;
       if(audio.state!=='running'){audioState='Ses hazır değil · Sesi dene düğmesine bas.';renderStatus();return;}
@@ -89,11 +123,11 @@
   function accept(batch){
     if(!ctx)return;
     const seen=new Set(records.map(r=>r.id)),fresh=[];
-    for(const row of batch.rows||[]){const id=String(row.id);if(!validId(id)||seen.has(id)||!options.allowed(row.tur))continue;seen.add(id);fresh.push({id,key:row.tur,at:Number.isFinite(Date.parse(row.created_at))?row.created_at:new Date().toISOString(),read:false});}
+    for(const row of batch.rows||[]){const id=String(row.id);if(!validId(id)||(cursor!==null&&BigInt(id)<=BigInt(cursor))||seen.has(id)||!options.allowed(row.tur))continue;seen.add(id);fresh.push({id,key:row.tur,at:Number.isFinite(Date.parse(row.created_at))?row.created_at:new Date().toISOString(),read:false});}
     records=[...fresh.reverse(),...records].slice(0,100);
-    if(validId(String(batch.cursor)))cursor=String(batch.cursor);
+    if(validId(String(batch.cursor))&&(cursor===null||BigInt(batch.cursor)>BigInt(cursor)))cursor=String(batch.cursor);
     save();render();
-    if(!fresh.length)return;
+    if(!fresh.length||batch.bootstrap===true)return;
     const text=fresh.length===1?options.label(fresh[0].key):fresh.length+' yeni başvuru';
     $('#approval-alert')?.remove();
     const banner=document.createElement('div');banner.id='approval-alert';banner.className='approval-alert notice-banner';banner.setAttribute('role','status');
@@ -120,6 +154,10 @@
     if(!ctx)return;
     $('#notice-connection').textContent=connection;
     $('#notice-audio-state').textContent=audioState;
+    const ready=$('#notice-audio-ready');
+    ready.textContent=!sound?'Sesi aç':audio?.state==='running'?'Ses hazır':'Sesi etkinleştir';
+    ready.classList.toggle('needs-action',!sound||audio?.state!=='running');
+    ready.title=!sound?'Yeni başvurularda ses duymak için aç.':audio?.state==='running'?'Bildirim sesi hazır. Denemek için tıkla.':'Tarayıcı sesi başlatmak için etkileşim bekliyor. Tıklayarak etkinleştir.';
     const p=permission();$('#notice-permission').textContent={granted:'Masaüstü bildirimi açık',denied:'Bildirim izni engelli · Tarayıcı site ayarlarından aç.',default:'Masaüstü bildirimi için izin gerekli',unsupported:'Bu tarayıcı masaüstü bildirimini desteklemiyor.'}[p];
     $('#approval-events [data-notice="desktop"]').hidden=p==='granted'||p==='unsupported'||p==='denied';
     $('#notice-desktop-error').textContent=desktopError;
