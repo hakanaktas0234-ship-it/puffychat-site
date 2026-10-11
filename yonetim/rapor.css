@@ -14,3 +14,19 @@ code.uuid{cursor:text;user-select:all}
 .destek-mesaj.giden{align-self:flex-end;background:rgba(217,184,106,.08)}
 .destek-mesaj p{margin:4px 0 0;white-space:normal;overflow-wrap:anywhere}
 .inline-form{display:flex;flex-wrap:wrap;gap:8px;align-items:flex-end}.inline-form label{flex:1 1 160px}
+/* Görünmez oda ekranı */
+dialog.oda-ekrani{width:min(1100px,calc(100vw - 24px));height:min(760px,calc(100vh - 24px));max-width:none;padding:0;display:flex;flex-direction:column;background:var(--panel,#141821);color:var(--cream,#ECE1C8);border:1px solid var(--line);border-radius:16px}
+dialog.oda-ekrani:not([open]){display:none}
+.oe-ust{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;padding:14px 18px;border-bottom:1px solid var(--line)}
+.oe-ust h2{margin:2px 0}.oe-araclar{display:flex;gap:10px;align-items:center}.oe-araclar input{width:120px}
+.oe-govde{flex:1;display:grid;grid-template-columns:1fr 340px;min-height:0}
+.oe-koltuklar{padding:18px;display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:14px;align-content:start;overflow:auto}
+.oe-koltuk{text-align:center}.oe-koltuk small{display:block;margin-top:6px;font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.oe-avatar{position:relative;width:68px;height:68px;margin:0 auto;border-radius:50%;border:2px solid var(--line);display:flex;align-items:center;justify-content:center;overflow:hidden;background:#0f131b;transition:box-shadow .15s,border-color .15s}
+.oe-avatar img{width:100%;height:100%;object-fit:cover}.oe-bos{color:var(--cream60,#aaa);font-size:13px}
+.oe-koltuk.dolu .oe-avatar{border-color:var(--gold,#D9B86A)}.oe-koltuk.konusuyor .oe-avatar{box-shadow:0 0 0 4px rgba(74,222,128,.55);border-color:#4ADE80}
+.oe-mute{position:absolute;right:0;bottom:0;font-style:normal;font-size:14px;background:#0009;border-radius:50%;padding:2px}
+.oe-yan{border-left:1px solid var(--line);display:flex;flex-direction:column;min-height:0;padding:12px}
+.oe-sohbet,.oe-kisiler{flex:1;overflow:auto;padding-right:4px}.oe-msj{margin:4px 0;font-size:13px;overflow-wrap:anywhere}.oe-msj small{color:var(--cream60,#aaa)}
+.oe-msj.hediye{color:#f4c06a}.oe-msj.duyuru{color:#9cc3ff}.oe-kisi{margin:6px 0}.oe-alt{padding:8px 18px;border-top:1px solid var(--line);margin:0}
+@media(max-width:760px){.oe-govde{grid-template-columns:1fr;grid-template-rows:auto 1fr}.oe-yan{border-left:0;border-top:1px solid var(--line)}.oe-ust{flex-direction:column}}
