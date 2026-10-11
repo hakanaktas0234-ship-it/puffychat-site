@@ -30,3 +30,8 @@ dialog.oda-ekrani:not([open]){display:none}
 .oe-sohbet,.oe-kisiler{flex:1;overflow:auto;padding-right:4px}.oe-msj{margin:4px 0;font-size:13px;overflow-wrap:anywhere}.oe-msj small{color:var(--cream60,#aaa)}
 .oe-msj.hediye{color:#f4c06a}.oe-msj.duyuru{color:#9cc3ff}.oe-kisi{margin:6px 0}.oe-alt{padding:8px 18px;border-top:1px solid var(--line);margin:0}
 @media(max-width:760px){.oe-govde{grid-template-columns:1fr;grid-template-rows:auto 1fr}.oe-yan{border-left:0;border-top:1px solid var(--line)}.oe-ust{flex-direction:column}}
+.oe-mic{position:absolute;right:-2px;bottom:-2px;font-style:normal;font-size:15px;line-height:1;background:#0b0e14;border:1px solid var(--line);border-radius:50%;padding:4px}
+.oe-mic.acik{border-color:#4ADE80}.oe-mic.kapali{border-color:#E57373}.oe-mic.mod{border-color:#E57373;background:#2a1416}
+.oe-avatar{overflow:visible}.oe-avatar img{border-radius:50%}
+.oe-koltuk.sessiz .oe-avatar{opacity:.65}.oe-durum{display:block;font-style:normal;font-size:11px;color:var(--cream60,#aaa)}
+.oe-koltuk.konusuyor .oe-durum{color:#4ADE80}

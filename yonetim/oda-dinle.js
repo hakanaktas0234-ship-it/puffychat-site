@@ -36,7 +36,7 @@
    const zg=new root.ZegoExpressEngine(data.app_id,data.server);
    try{zg.setDebugVerbose?.(false);}catch{}
    const a={zg,oda:String(data.room_id||odaGiris),uuid:bilgi?.id||null,koltukSay:Math.min(Math.max(Number(bilgi?.seat_count)||10,1),20),
-     akislar:new Map(),koltuk:new Map(),seviye:new Map(),susturulan:new Set(),adlar:new Map(),dlg,sonKod:null,sonHata:'',kisiZaman:null};aktif=a;
+     akislar:new Map(),koltuk:new Map(),seviye:new Map(),susturulan:new Set(),mic:new Map(),adlar:new Map(),dlg,sonKod:null,sonHata:'',kisiZaman:null};aktif=a;
    const ses=$('[data-ses]');ses.oninput=()=>{for(const el of a.akislar.values())el.volume=Number(ses.value)/100;};
 
    // --- adlar: koltuktaki kullanıcıların adı/fotoğrafı (yalnız yönetici RPC'si) ---
@@ -44,16 +44,22 @@
    const adCoz=()=>{clearTimeout(adBekleyen);adBekleyen=setTimeout(async()=>{const eksik=[...a.koltuk.values()].map(k=>k.uid).filter(u=>UUID.test(u)&&!a.adlar.has(u)).slice(0,60);if(!eksik.length)return;try{const r=await rpc(c,'yonetim_kisi_ozetleri',{p_ids:eksik});for(const [k,v] of Object.entries(r||{}))a.adlar.set(k,v);if(aktif===a)ciz();}catch{}},150);};
    const ciz=()=>{const kutu=$('[data-koltuklar]');if(!kutu)return;let h='';
     for(let i=0;i<a.koltukSay;i++){const k=[...a.koltuk.values()].find(x=>x.s===i);const kisi=k&&a.adlar.get(k.uid);const lv=k?(a.seviye.get(k.sid)||0):0;
-     h+=`<div class="oe-koltuk ${k?'dolu':''} ${lv>8?'konusuyor':''}"><div class="oe-avatar">${k?(kisi?.avatar?`<img src="${esc(kisi.avatar)}" alt="" referrerpolicy="no-referrer">`:'<span>👤</span>'):'<span class="oe-bos">'+(i+1)+'</span>'}${k&&a.susturulan.has(i)?'<i class="oe-mute" title="Susturuldu">🔇</i>':''}</div><small>${k?(kisi?`<a href="#kullanici/${esc(k.uid)}" target="_blank" rel="noopener">${esc(kisi.ad)}</a>`:'…'):'Boş'}</small></div>`;}
+     // Mikrofon durumu: yönetici susturması > kişinin kendi kapatması > açık (ses gelmesi de "açık" sayılır).
+     const ms=k?a.mic.get(k.sid):null,mod=k&&a.susturulan.has(i),kapali=!mod&&(ms==='MUTE'||ms==='CLOSE')&&lv<=8;
+     const rozet=!k?'':mod?'<i class="oe-mic mod" title="Yönetici susturdu">⛔</i>':kapali?'<i class="oe-mic kapali" title="Mikrofon kapalı">🔇</i>':'<i class="oe-mic acik" title="Mikrofon açık">🎤</i>';
+     const yazi=!k?'':mod?'Susturuldu':kapali?'Mikrofon kapalı':lv>8?'Konuşuyor':'Mikrofon açık';
+     h+=`<div class="oe-koltuk ${k?'dolu':''} ${lv>8&&!mod?'konusuyor':''} ${kapali||mod?'sessiz':''}"><div class="oe-avatar">${k?(kisi?.avatar?`<img src="${esc(kisi.avatar)}" alt="" referrerpolicy="no-referrer">`:'<span>👤</span>'):'<span class="oe-bos">'+(i+1)+'</span>'}${rozet}</div><small>${k?(kisi?`<a href="#kullanici/${esc(k.uid)}" target="_blank" rel="noopener">${esc(kisi.ad)}</a>`:'…'):'Boş'}</small>${k?`<em class="oe-durum">${yazi}</em>`:''}</div>`;}
     kutu.innerHTML=h;};
-   const say=()=>durum((a.koltuk.size?a.koltuk.size+' kişi koltukta':'Koltuklar boş')+' · '+(a.akislar.size?'ses açık':'ses yok')+(a.sonHata?' · '+a.sonHata:''));
+   const say=()=>durum((a.koltuk.size?a.koltuk.size+' kişi koltukta · '+[...a.koltuk.values()].filter(k=>!(a.susturulan.has(k.s)||['MUTE','CLOSE'].includes(a.mic.get(k.sid)))).length+' mikrofon açık':'Koltuklar boş')+' · '+(a.akislar.size?'ses açık':'ses yok')+(a.sonHata?' · '+a.sonHata:''));
    const PARSE=/^stream_([0-9a-f-]{36})_s(\d{1,2})$/i;
    zg.on('roomStreamUpdate',async(_r,tip,liste)=>{if(aktif!==a)return;for(const s of liste){const m=PARSE.exec(s.streamID||'');
      if(tip==='ADD'){if(m)a.koltuk.set(s.streamID,{sid:s.streamID,uid:m[1].toLowerCase(),s:Number(m[2])});
       if(!a.akislar.has(s.streamID)){try{const ms=await zg.startPlayingStream(s.streamID,{video:false,audio:true});const el=document.createElement('audio');el.autoplay=true;el.srcObject=ms;el.volume=Number(ses.value)/100;$('[data-sesler]').append(el);a.akislar.set(s.streamID,el);el.play?.().catch(()=>{a.sonHata='ses için pencereye bir kez tıkla';say();});}catch(err){a.sonHata='oynatma: '+String(err?.msg||err?.message||err).slice(0,60);}}}
-     else if(tip==='DELETE'){a.koltuk.delete(s.streamID);a.seviye.delete(s.streamID);if(a.akislar.has(s.streamID)){try{zg.stopPlayingStream(s.streamID);}catch{}a.akislar.get(s.streamID).remove();a.akislar.delete(s.streamID);}}
+     else if(tip==='DELETE'){a.koltuk.delete(s.streamID);a.seviye.delete(s.streamID);a.mic.delete(s.streamID);if(a.akislar.has(s.streamID)){try{zg.stopPlayingStream(s.streamID);}catch{}a.akislar.get(s.streamID).remove();a.akislar.delete(s.streamID);}}
     }adCoz();ciz();say();});
-   try{zg.setSoundLevelDelegate?.(true,700);}catch{}
+   try{zg.setSoundLevelDelegate?.(true,500);}catch{}
+   // Kişi mikrofonu kendisi kapatınca/açınca (uygulama muteMicrophone) Zego bildirir: OPEN / MUTE / CLOSE.
+   zg.on('remoteMicStatusUpdate',(sid,st)=>{if(aktif!==a)return;a.mic.set(sid,String(st||'').toUpperCase());ciz();say();});
    zg.on('soundLevelUpdate',list=>{if(aktif!==a)return;let degisti=false;for(const x of list||[]){const v=Number(x.soundLevel)||0,eski=a.seviye.get(x.streamID)||0;if((v>8)!==(eski>8))degisti=true;a.seviye.set(x.streamID,v);}if(degisti)ciz();});
 
    // --- sohbet / hediye / oda olayları ---
@@ -64,7 +70,7 @@
      if(m.t==='chat'){const k=m.k||'txt';yaz(`<small>${t}</small> <b>${ad}</b>: `+(k==='img'?'🖼 fotoğraf'+(m.thumb?` <a href="${esc(m.thumb)}" target="_blank" rel="noopener">aç</a>`:''):k==='vid'?'🎬 video':k==='duyuru'?'📢 '+esc(m.m):esc(m.m)),k==='duyuru'?'duyuru':'');}
      else if(m.t==='gift'&&m.gn)yaz(`<small>${t}</small> 🎁 <b>${ad}</b> ${esc(m.e||'')} ${esc(m.gn)}${Number(m.q)>1?' ×'+esc(m.q):''}${m.c?' · '+esc(m.c)+' coin':''}`,'hediye');
      else if(m.t==='announce')yaz(`<small>${t}</small> 📢 Oda duyurusu güncellendi`,'duyuru');
-     else if(m.t==='seat_mute'&&Number.isInteger(m.s)){if(m.muted)a.susturulan.add(m.s);else a.susturulan.delete(m.s);ciz();}
+     else if(m.t==='seat_mute'&&Number.isInteger(m.s)){if(m.muted)a.susturulan.add(m.s);else a.susturulan.delete(m.s);ciz();say();}
      else if(m.t==='mod'&&m.a)yaz(`<small>${t}</small> ⚙ Yönetim işlemi: ${esc(m.a)}`,'duyuru');
     }});
    // --- odadakiler (son 150 sn varlık sinyali) ---
