@@ -1,44 +1,4 @@
-<!DOCTYPE html>
-<html lang="tr">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Puffy'yi indir — Android</title>
-<meta name="description" content="Puffy Android uygulamasını doğrudan indir ve kur.">
-<meta name="robots" content="noindex">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Inter:wght@400;500;600&display=swap">
-<link rel="stylesheet" href="/style.css">
-<style>
-  .indir-dugme { display:block; text-align:center; font-size:19px; padding:16px 22px; margin:22px 0 10px; }
-  .not { color: var(--solgun); font-size: 14px; margin: 0 0 28px; }
-  ol.adim { padding-left: 20px; }
-  ol.adim li { margin: 10px 0; }
-  .panel { display:none; border:1px solid var(--altin-koyu); background: var(--panel-ust); border-radius: 14px; padding: 16px 18px; margin: 0 0 28px; }
-  .panel.acik { display:block; }
-  .panel h3 { margin:0 0 6px; color: var(--altin-acik); font-size: 18px; }
-  .panel ol { padding-left: 20px; margin: 8px 0 0; }
-  .panel li { margin: 8px 0; }
-  .nabiz { display:inline-block; width:10px; height:10px; border-radius:50%; background: var(--altin); margin-right:8px; animation: nabiz 1.2s ease-in-out infinite; }
-  @keyframes nabiz { 0%,100%{opacity:.35; transform:scale(.8)} 50%{opacity:1; transform:scale(1.15)} }
-  .dugme.basildi { opacity:.75; pointer-events:none; }
-  .uyari { border:1px solid var(--cizgi); background: var(--panel); border-radius: 12px; padding: 14px 16px; font-size: 14px; color: var(--solgun); }
-</style>
-</head>
-<body>
-<header class="ust"><div class="kabuk">
-  <a class="marka" href="/">Puffy<span>.</span></a>
-  <nav><a href="/destek/">Destek</a><a href="/gizlilik/">Gizlilik</a></nav>
-</div></header>
-
-<main><div class="kabuk">
-  <section class="hero">
-    <h1>Puffy'yi indir</h1>
-    <p>Android için doğrudan kurulum dosyası. Tek dokunuşla iner, kurulumu sen onaylarsın.</p>
-    <a id="indirDugme" class="dugme indir-dugme" href="https://rjdddbwotczhagdulwco.supabase.co/storage/v1/object/public/indir/Puffy.apk?download=Puffy.apk">Puffy.apk indir</a>
-    <p class="not" id="dosyaNot">Dosya yaklaşık 530 MB — Wi-Fi'de indirmeni öneririz. Android 7.0 ve üzeri.</p>
-    <div id="panel" class="panel" aria-live="polite">
+<!doctype html><html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><title>Puffy'yi indir — Android</title><meta name="description" content="Puffy ile sesli sohbet odaları, arkadaşlık ve sana özel oda temaları."><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=DM+Sans:wght@400;500;600;700&display=swap"><style>*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.65 "DM Sans",sans-serif}a{color:inherit}img{max-width:100%;display:block}header,main,footer{max-width:1080px;margin:auto}header{height:80px;display:flex;align-items:center;justify-content:space-between;padding:0 26px}header a{text-decoration:none;font-size:13px}.brand{display:flex;align-items:center;gap:10px;font-size:26px;font-family:Georgia;letter-spacing:1px}.brand img{width:39px;height:39px;border-radius:12px}h1,h2,h3,p{margin:0}h1,h2{font-family:"Cormorant Garamond",Georgia,serif;font-weight:500;line-height:1.02}h1{font-size:clamp(48px,7vw,82px);letter-spacing:-1.8px}h2{font-size:38px}h3{font-size:18px;font-weight:500}.eyebrow{font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--gold);margin-bottom:16px}.hero{position:relative;isolation:isolate;padding:38px 26px 32px;overflow:hidden}.hero h1+p{font-size:15px;color:var(--muted);max-width:430px;margin:18px auto 0}.copy{text-align:center;position:relative;z-index:2}.indir-dugme{position:relative;display:block;text-decoration:none;padding:17px 24px;margin:24px auto 9px;max-width:380px;border:1px solid #e9d59a;border-radius:9px;background:linear-gradient(110deg,#b88a3c,#f0d89a 48%,#c49a51);color:#211808;font-size:17px;font-weight:700;box-shadow:0 8px 30px #d9b86a24}.not{color:var(--muted);font-size:11px;margin:0 auto;max-width:360px}.visual{margin:26px auto 0;position:relative}.visual img{width:100%;height:100%;object-fit:cover}.section{padding:40px 26px;border-top:1px solid var(--line)}.section .intro{color:var(--muted);margin-top:12px;max-width:520px}.features{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:26px}.feature{border:1px solid var(--line);border-radius:16px;overflow:hidden;background:var(--card)}.feature img{width:100%;height:180px;object-fit:cover}.feature.gift img{object-fit:contain;padding:18px}.feature div{padding:19px}.feature p{color:var(--muted);font-size:13px;margin-top:8px}.adim{list-style:none;padding:0;margin:25px 0;counter-reset:steps}.adim li{counter-increment:steps;position:relative;padding:20px 0 20px 55px;border-bottom:1px solid var(--line);font-size:14px;color:var(--muted)}.adim li:before{content:counter(steps);position:absolute;left:0;top:19px;width:33px;height:33px;border:1px solid var(--gold);border-radius:50%;display:grid;place-items:center;color:var(--gold);font-family:Georgia;font-size:20px}.uyari{background:var(--card);border:1px solid var(--line);padding:20px;border-radius:12px;font-size:13px;color:var(--muted)}.uyari strong{display:block;color:var(--ink);margin-bottom:8px}.play{font-size:12px;color:var(--muted);margin-top:20px}.support{display:flex;justify-content:space-between;align-items:center;gap:20px}.support h2{font-size:32px}.support a{color:var(--gold);font-size:13px}.panel{display:none;text-align:left;border:1px solid var(--gold);background:var(--bg);padding:20px;border-radius:12px;margin:20px auto;max-width:500px}.panel.acik{display:block}.panel h3{color:var(--gold)}.panel ol{padding-left:20px;font-size:13px}.basildi{opacity:.75;pointer-events:none}footer{padding:26px;color:var(--muted);border-top:1px solid var(--line);font-size:10px}footer nav{display:flex;flex-wrap:wrap;gap:18px;margin-bottom:18px}footer a{text-decoration:none}a:focus-visible{outline:3px solid var(--gold);outline-offset:4px}.gallery{display:flex;gap:14px;overflow-x:auto;scroll-snap-type:x mandatory;padding:18px 26px 32px;max-width:100%;scrollbar-width:thin}.theme{flex:0 0 150px;scroll-snap-align:center;transform:rotate(-3deg);border-radius:90px 90px 14px 14px;overflow:hidden;border:1px solid var(--gold);box-shadow:0 14px 25px #0004}.theme:nth-child(even){transform:rotate(3deg)}.theme img{height:220px;width:100%;object-fit:cover}.theme figcaption{text-align:center;font-size:11px;padding:8px;background:var(--card)}figure{margin:0}.float{border-radius:50%;position:absolute;width:65px;animation:float 7s ease-in-out infinite;z-index:1}.float.one{left:0;top:45%}.float.two{right:0;top:19%;animation-delay:-3s}.float.three{right:4%;bottom:0;animation-delay:-5s}@keyframes float{50%{transform:translateY(-12px) rotate(5deg)}}@media(min-width:720px){.hero{padding-top:65px}.hero.a{display:grid;grid-template-columns:1.1fr 1fr;align-items:center}.a .copy{text-align:left}.a .hero h1+p{margin-left:0}.a .indir-dugme,.a .not{margin-left:0}.gallery{justify-content:center}.theme{flex-basis:200px}.theme img{height:285px}.section{padding:56px 40px}.visual.arch{height:330px;width:300px}}@media(max-width:600px){.features{grid-template-columns:1fr}.feature{display:flex;align-items:center}.feature img{width:110px;height:135px;flex-shrink:0}.feature div{padding:17px}.support{display:block}.support a{display:inline-block;margin-top:14px}}@media(prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}body{--bg:#0b0d14;--ink:#f5e9ce;--muted:#b6b3aa;--gold:#d9b86a;--line:#d9b86a32;--card:#ffffff06}.hero:before{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(0deg,#0b0d14, #0b0d14aa),url(varlik/kubbe.webp) center 20%/cover}.visual.phone{width:158px;height:250px;border:1px solid #d9b86a;border-radius:22px;padding:5px;background:#101219;box-shadow:0 16px 50px #0008}.phone img{border-radius:17px;filter:brightness(1.28) saturate(1.1)}.a .feature{backdrop-filter:blur(10px)}</style></head><body class="a"><header><a class="brand" href="/"><img src="varlik/logo.webp" alt="" width="39" height="39">Puffy</a><a href="/destek/">Destek ↗</a></header><main><section class="hero a"><div class="copy"><div class="eyebrow">Sesli sohbet · Arkadaşlık</div><h1>Sesinle başlayan<br>bir dünya</h1><p>Sesli odalarda buluş, yeni arkadaşlarla tanış. Sana ait bir odada sohbetin rengini değiştir.</p><a id="indirDugme" class="indir-dugme" href="https://rjdddbwotczhagdulwco.supabase.co/storage/v1/object/public/indir/Puffy.apk?download=Puffy.apk">Puffy.apk indir ↓</a><p class="not" id="dosyaNot">Dosya yaklaşık 850 MB — Wi-Fi'de indirmeni öneririz. Android 7.0 ve üzeri.</p>    <div id="panel" class="panel" aria-live="polite">
       <h3><span class="nabiz"></span>İndirme başladı</h3>
       <p class="not" style="margin:0">Dosya arka planda iniyor. Wi-Fi'de birkaç dakika sürer; bu sayfayı kapatabilirsin.</p>
       <ol>
@@ -47,33 +7,7 @@
         <li>"İzin ver" sorarsa izin ver, sonra <strong>Yükle</strong> → <strong>Aç</strong>.</li>
       </ol>
       <p class="not" style="margin:12px 0 0">İndirme başlamadıysa <a href="#" id="tekrar">buraya dokunarak tekrar dene</a>.</p>
-    </div>
-  </section>
-
-  <h2>Kurulum</h2>
-  <ol class="adim">
-    <li>Yukarıdaki düğmeye dokun; indirme bildirim çubuğunda görünür.</li>
-    <li>İndirme bitince dosyaya dokun. Telefon <strong>"Bu kaynaktan uygulama yüklenmesine izin ver"</strong> derse <strong>İzin ver</strong>'e dokun ve geri dön.</li>
-    <li><strong>Yükle</strong>'ye dokun, bitince <strong>Aç</strong>.</li>
-  </ol>
-
-  <div class="uyari">
-    Daha önce Google Play'den kurduysan: önce o Puffy'yi kaldır, sonra bu dosyayı kur. Hesabın ve coinlerin kaybolmaz; aynı bilgilerle girince yerinde durur.
-  </div>
-
-  <h2>Google Play</h2>
-  <p>Puffy yakında Google Play'de de olacak; o zaman güncellemeler otomatik gelir.
-     <a href="https://play.google.com/store/apps/details?id=com.drgdijital.puffy">Play sayfası</a></p>
-
-  <h2>Sorun mu var?</h2>
-  <p><a class="eposta" href="mailto:destek@puffychat.com">destek@puffychat.com</a></p>
-</div></main>
-
-<footer><div class="kabuk">
-  <nav><a href="/">Ana sayfa</a><a href="/destek/">Destek</a><a href="/gizlilik/">Gizlilik Politikası</a><a href="/kullanim-sartlari/">Kullanım Şartları</a></nav>
-  <p>&copy; 2026 DRG Dijital Teknoloji Hizmetleri Limited Şirketi · Puffy</p>
-</div></footer>
-<script>
+    </div></div><div class="visual phone"><img src="varlik/aurora.webp" alt="Aurora Vadisi oda teması" width="158" height="250"></div></section><section class="section"><div class="eyebrow">Bir uygulamadan daha fazlası</div><h2>Sohbetin sana ait.</h2><div class="features"><article class="feature"><img src="varlik/aurora.webp" alt="Aurora Vadisi sesli oda teması" loading="lazy"><div><h3>Sesli odalar</h3><p>Arkadaşlarınla aynı odada buluş. Sohbete sesinle katıl.</p></div></article><article class="feature gift"><img src="varlik/hediye.webp" alt="Puffy hediye ikonu" loading="lazy"><div><h3>Hediyeler ve VIP</h3><p>Özel hediyelerle kendini ifade et. Profiline kendi tarzını kat.</p></div></article><article class="feature"><img src="varlik/pencere.webp" alt="Ay Penceresi oda teması" loading="lazy"><div><h3>Oda temaları</h3><p>Odanın atmosferini seç. Her buluşmaya farklı bir renk ver.</p></div></article></div></section><section class="section"><div class="eyebrow">Birkaç dokunuşla</div><h2>Kurulum</h2><ol class="adim"><li>Yukarıdaki indirme düğmesine dokun. İlerlemeyi bildirim çubuğundan takip et.</li><li>İndirme bitince dosyaya dokun. Telefon <strong>“Bu kaynaktan uygulama yüklenmesine izin ver”</strong> derse <strong>İzin ver</strong>'e dokun ve geri dön.</li><li><strong>Yükle</strong>'ye dokun; bitince <strong>Aç</strong>.</li></ol><div class="uyari"><strong>Hesabın ve coinlerin kurulumda kaybolmaz.</strong>Daha önce Google Play'den kurduysan önce o Puffy'yi kaldır, sonra bu dosyayı kur. Aynı bilgilerle giriş yaptığında hesabın ve coinlerin yerinde durur.</div><p class="play">Google Play'de yakında. Puffy Google Play'de olduğunda güncellemeler otomatik gelir. <a href="https://play.google.com/store/apps/details?id=com.drgdijital.puffy">Play sayfası ↗</a></p></section><section class="section support"><div><div class="eyebrow">Yanındayız</div><h2>Sorun mu var?</h2></div><a href="mailto:destek@puffychat.com">destek@puffychat.com ↗</a></section></main><footer><nav><a href="/">Ana sayfa</a><a href="/destek/">Destek</a><a href="/gizlilik/">Gizlilik Politikası</a><a href="/kullanim-sartlari/">Kullanım Şartları</a></nav><p>© 2026 DRG Dijital Teknoloji Hizmetleri Limited Şirketi · Puffy</p></footer><script>
 (function(){
   var d=document.getElementById('indirDugme'), p=document.getElementById('panel'), r=document.getElementById('tekrar');
   function basla(){ p.classList.add('acik'); d.classList.add('basildi'); d.textContent='İndiriliyor…'; p.scrollIntoView({behavior:'smooth',block:'nearest'}); }
@@ -82,7 +16,7 @@
 
   // Dosya boyutu ve sürüm: sabit metin yerine depodan okunur (okunamazsa yukarıdaki metin kalır).
   var n=document.getElementById('dosyaNot'), apk=d.href.split('?')[0], surum='';
-  function yaz(mb){ n.textContent='Dosya '+(mb?'yaklaşık '+mb+' MB':'yaklaşık 530 MB')+(surum?' (sürüm '+surum+')':'')+" — Wi-Fi'de indirmeni öneririz. Android 7.0 ve üzeri."; }
+  function yaz(mb){ n.textContent='Dosya '+(mb?'yaklaşık '+mb+' MB':'yaklaşık 850 MB')+(surum?' (sürüm '+surum+')':'')+" — Wi-Fi'de indirmeni öneririz. Android 7.0 ve üzeri."; }
   // Uygulamadan "GÜNCELLE" ile gelindiyse (?guncelle=<mevcut sürüm kodu>) sayfa güncelleme diliyle konuşur.
   var mevcut=parseInt(new URLSearchParams(location.search).get('guncelle')||'0',10), guncelleModu=mevcut>0;
   if(guncelleModu){
@@ -102,6 +36,4 @@
     if(b>0){ yaz(Math.round(b/1048576)); }
   }).catch(function(){});
 })();
-</script>
-</body>
-</html>
+</script></body></html>
