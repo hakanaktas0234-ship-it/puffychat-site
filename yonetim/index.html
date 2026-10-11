@@ -334,7 +334,9 @@ $('#btn-dogrula').onclick = () => kodDogrula($('#kod').value.trim());
 $('#kod').addEventListener('keydown', e=>{ if(e.key==='Enter') $('#btn-dogrula').click(); });
 $('#kod-kur').addEventListener('keydown', e=>{ if(e.key==='Enter') $('#btn-kur').click(); });
 $('#sifre').addEventListener('keydown', e=>{ if(e.key==='Enter') $('#btn-eposta').click(); });
-async function cikis(){ const {error}=await sb.auth.signOut({ scope: 'local' }); if(error){toast('Çıkış tamamlanamadı. Tekrar dene.');return;} PuffyPhase1.close();panelCaps={};panelSession=null;try{sessionStorage.removeItem('puffy_mfa');sessionStorage.removeItem('puffy_giris_zamani');sessionStorage.removeItem('puffy_son_hareket');}catch(_){} location.hash=''; goster('giris'); }
+// Önce EKRAN kilitlenir, sonra oturum kapatılır: signOut hata verse bile
+// hassas sayfa açık kalmasın (Codex raporu P1, 2026-10-11).
+async function cikis(){ try{PuffyPhase1.close();}catch(_){} panelCaps={};panelSession=null;try{sessionStorage.removeItem('puffy_mfa');sessionStorage.removeItem('puffy_giris_zamani');sessionStorage.removeItem('puffy_son_hareket');}catch(_){} location.hash=''; $('#uyg').classList.add('hidden'); $('#giris').classList.remove('hidden'); goster('giris'); let hataVar=false; try{const {error}=await sb.auth.signOut({ scope: 'local' }); hataVar=!!error;}catch(_){hataVar=true;} if(hataVar){ try{for(const k of Object.keys(localStorage)){if(k.startsWith('sb-'))localStorage.removeItem(k);}}catch(_){} toast('Oturum bu cihazda kapatıldı; sunucu çıkışı tamamlanamadı.'); } }
 $('#btn-cikis').onclick = cikis; $('#btn-cikis-giris').onclick = cikis;
 
 // ---------- SAYFALAR ----------
