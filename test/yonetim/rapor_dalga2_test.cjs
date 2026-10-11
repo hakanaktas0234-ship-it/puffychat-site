@@ -9,7 +9,8 @@ test('#23 sessiz dinleme yayın yapmaz, SDK aynı sunucudan, kayıt uyarısı g�
  const s=oku('yonetim/oda-dinle.js');assert.doesNotMatch(s,/startPublishingStream|createStream|getUserMedia/);
  assert.match(s,/vendor\/zego-web-3\.12\.240\.js/);assert.match(s,/yönetim kaydına yazılır/);
  assert.ok(fs.existsSync(path.join(kok,'yonetim/vendor/zego-web-3.12.240.js')),'Zego paketi eksik');
- const g=oku('gizlilik/index.html');assert.match(g,/odadakilere\s+görünmeden dinleyebilir/);
+ // Gizlilik paragrafı Play incelemesi bitene kadar kaldırıldı (2026-10-12, Hakan: "o yazıyı sil");
+ // onay gelince paragraf ve Veri güvenliği formu birlikte geri eklenince bu kontrol de döner.
 });
 test('#22 destek formu doğru şemaya gider, bal küpü alanı ve sınır mesajı var',()=>{
  const f=oku('destek/form.js');assert.match(f,/'Content-Profile':'public'/);assert.match(f,/rpc\/destek_formu_gonder/);assert.match(f,/HOURLY_LIMIT/);assert.match(f,/sb_publishable_/);
