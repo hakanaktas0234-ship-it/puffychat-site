@@ -20,7 +20,7 @@
    const {data,error}=await c.sb.functions.invoke('yonetim-oda-dinle',{body:{room_id:String(oda)}});
    if(error||!data?.token)throw new Error(data?.error||'TOKEN_ALINAMADI');
    const zg=new root.ZegoExpressEngine(data.app_id,data.server);
-   try{zg.setLogConfig?.({logLevel:'disable',remoteLogLevel:'disable'});zg.setDebugVerbose?.(false);}catch{}
+   try{zg.setDebugVerbose?.(false);}catch{}
    const a={zg,oda:String(oda),akislar:new Map(),dlg};aktif=a;
    const kutu=dlg.querySelector('[data-sesler]'),ses=dlg.querySelector('[data-ses]');
    const say=()=>durum(a.akislar.size?'Dinleniyor · '+a.akislar.size+' kişi konuşuyor':'Bağlandı · Şu an mikrofonda kimse yok');
@@ -29,10 +29,16 @@
      if(tip==='ADD'&&!a.akislar.has(s.streamID)){try{const ms=await zg.startPlayingStream(s.streamID,{video:false});const el=document.createElement('audio');el.autoplay=true;el.srcObject=ms;el.volume=Number(ses.value)/100;kutu.append(el);a.akislar.set(s.streamID,el);el.play?.().catch(()=>durum('Sesi başlatmak için pencereye bir kez tıkla.'));}catch{}}
      else if(tip==='DELETE'&&a.akislar.has(s.streamID)){try{zg.stopPlayingStream(s.streamID);}catch{}a.akislar.get(s.streamID).remove();a.akislar.delete(s.streamID);}
     }say();});
-   zg.on('roomStateChanged',(_r,neden)=>{if(aktif===a&&/LOGOUT|KICKOUT|FAILED/i.test(String(neden)))durum('Bağlantı kapandı ('+neden+').');});
-   const ok=await zg.loginRoom(a.oda,data.token,{userID:data.user_id,userName:'Puffy'},{userUpdate:false});
-   if(!ok)throw new Error('GIRIS_BASARISIZ');if(aktif!==a)return;say();
-  }catch(e){durum('Dinleme başlatılamadı: '+(c.errorText?c.errorText(e):String(e?.message||e)));}
+   // Tanı: bağlantı durumu ve hata kodu ekranda görünür (2026-10-11, "Bağlanıyor…"da kalma).
+   const kod=(r,k)=>{a.sonKod=k;if(aktif===a&&k)durum('Bağlantı hatası · Zego kodu '+k+(r?' ('+r+')':'')+'. Bu kodu ilet.');};
+   zg.on('roomStateChanged',(_r,neden,k)=>{if(/FAIL|KICK|LOGOUT/i.test(String(neden)))kod(neden,k);else if(aktif===a&&/LOGIN(ED)?$|CONNECTED/i.test(String(neden)))say();});
+   zg.on('roomStateUpdate',(_r,st,k)=>{if(k)kod(st,k);else if(st==='CONNECTED'&&aktif===a)say();});
+   const zaman=new Promise((_,ko)=>setTimeout(()=>ko(new Error('ZAMAN_ASIMI')),20000));
+   let ok;
+   try{ok=await Promise.race([zg.loginRoom(a.oda,data.token,{userID:data.user_id,userName:'Puffy'},{userUpdate:false}),zaman]);}
+   catch(e){const k=e?.code||e?.errorCode||a.sonKod;throw new Error(e?.message==='ZAMAN_ASIMI'?'Zego sunucusuna 20 sn içinde bağlanılamadı'+(k?' (kod '+k+')':'')+'.':'Zego girişi reddedildi'+(k?' (kod '+k+')':'')+': '+(e?.msg||e?.message||e));}
+   if(!ok)throw new Error('Zego girişi başarısız'+(a.sonKod?' (kod '+a.sonKod+')':''));if(aktif!==a)return;say();
+  }catch(e){const m=String(e?.message||e);durum('Dinleme başlatılamadı: '+m);try{root.PuffyHata?.kaydet({rpc:'zego_login',kod:(m.match(/kod (\d+)/)||[])[1]||'ZEGO',sinif:'zego'});}catch{}}
  }
  // Oda gözlemi sayfasındaki düğme (gozlem.js) için ortak bağlam.
  let bag=null;
