@@ -1,0 +1,23 @@
+const {test}=require('node:test'),assert=require('node:assert/strict'),vm=require('node:vm'),fs=require('node:fs'),path=require('node:path');
+const source=fs.readFileSync(process.env.NOTICE_SOURCE||path.join(__dirname,'../../yonetim/notifications.js'),'utf8');
+function harness({deniedStorage=false,notificationThrows=false}={}){
+ const elements=new Map(),storage=new Map();
+ const el=s=>{if(!elements.has(s))elements.set(s,{innerHTML:'',textContent:'',value:0,checked:false,hidden:false,classList:{contains:()=>true,toggle(){}},setAttribute(){},insertAdjacentHTML(){},addEventListener(type,fn){this[type]=fn;},remove(){},after(){},focus(){},querySelector:q=>el(q)});return elements.get(s);};
+ class Notification{static permission='granted';constructor(){if(notificationThrows)throw Error('blocked');}static requestPermission(){return Promise.resolve('granted');}}
+ const document={querySelector:el,createElement:el,addEventListener(){},removeEventListener(){}};
+ const window={Notification,addEventListener(){},removeEventListener(){}};
+ vm.runInNewContext(source,{window,document,Notification,Date,Set,localStorage:{getItem:k=>{if(deniedStorage)throw Error();return storage.get(k)||null;},setItem:(k,v)=>{if(deniedStorage)throw Error();storage.set(k,v);}}});
+ const api=window.PuffyNotifications,options={keys:['sikayet','para_cekme'],allowed:k=>k==='sikayet',label:k=>k,path:k=>'#'+k};
+ const init=id=>api.init({user:{id},esc:String,date:String},options);
+ const batch=(id='1',tur='sikayet')=>({cursor:id,rows:[{id,tur,created_at:new Date().toISOString()}]});
+ return {api,init,batch,el,storage,options,window};
+}
+test('Yenileme geçmişi ve cursoru korur, aynı olay tekrar eklenmez',()=>{const h=harness();h.init('a');h.api.accept(h.batch());h.api.stop();h.init('a');assert.equal(h.api.getCursor(),'1');assert.equal(h.el('#approval-total').textContent,'1');h.api.accept(h.batch());assert.equal(h.el('#approval-total').textContent,'1');});
+test('Farklı yönetici geçmişi göremez; yetkisiz kategori alınmaz',()=>{const h=harness();h.init('a');h.api.accept(h.batch());h.init('b');assert.equal(h.api.getCursor(),null);assert.equal(h.el('#approval-total').textContent,'0');h.api.accept(h.batch('2','para_cekme'));assert.equal(h.el('#approval-total').textContent,'0');});
+test('Masaüstü bildirimi başarısız olsa da cursor ilerler',()=>{const h=harness({notificationThrows:true});h.init('a');assert.doesNotThrow(()=>h.api.accept(h.batch()));assert.equal(h.api.getCursor(),'1');assert.match(h.el('#notice-desktop-error').textContent,/gösterilemedi/);});
+test('Depolama engeli görünür olur ve oturum bildirimleri çalışır',()=>{const h=harness({deniedStorage:true});h.init('a');h.api.accept(h.batch());assert.equal(h.el('#approval-total').textContent,'1');assert.match(h.el('#notice-storage').textContent,/kaydedilemiyor/);});
+test('Bozuk geçmiş güvenli biçimde sıfırlanır',()=>{const h=harness();h.init('a');h.api.accept(h.batch());h.storage.set([...h.storage.keys()][0],'{broken');assert.doesNotThrow(()=>h.init('a'));assert.equal(h.api.getCursor(),null);});
+test('Geçmiş 100 ile sınırlı, bekleyen sayaç okunmamış sayıyı değiştirmez',()=>{const h=harness();h.init('a');for(let i=1;i<=110;i++)h.api.accept(h.batch(String(i)));h.api.setPending(987);const saved=JSON.parse([...h.storage.values()][0]);assert.equal(saved.records.length,100);assert.equal(h.el('#approval-total').textContent,'99+');assert.equal(h.el('#notice-pending').textContent,'987 karar bekliyor');});
+
+test('Okundu durumu yenilemede korunur',async()=>{const h=harness();h.init('a');h.api.accept(h.batch());await h.el('#approval-events').click({target:{closest:q=>q==='[data-notice]'?{dataset:{notice:'read-all'}}:null}});assert.equal(h.el('#approval-total').textContent,'0');h.init('a');assert.equal(h.el('#approval-total').textContent,'0');});
+test('Ses kullanıcı etkileşiminde resume edilir ve iki ton çalar',async()=>{const h=harness();let resumes=0,tones=0;h.window.AudioContext=class{state='suspended';currentTime=0;resume(){resumes++;this.state='running';return Promise.resolve();}close(){return Promise.resolve();}createOscillator(){return {frequency:{},connect(){},start(){tones++;},stop(){},disconnect(){}};}createGain(){return {gain:{setValueAtTime(){},linearRampToValueAtTime(){},exponentialRampToValueAtTime(){}},connect(){},disconnect(){}};}};h.init('a');await h.el('#approval-events').click({target:{closest:q=>q==='[data-notice]'?{dataset:{notice:'test'}}:null}});assert.equal(resumes,1);assert.equal(tones,2);assert.match(h.el('#notice-audio-state').textContent,/Deneme sesi/);});
