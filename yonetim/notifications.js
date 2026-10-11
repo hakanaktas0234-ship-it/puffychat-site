@@ -27,7 +27,7 @@
     storageKey=c.user?.id?'puffy_notifications_v1:'+c.user.id+':'+o.keys.filter(o.allowed).sort().join(','):null;
     if(storageKey)read();else storageOK=false;
     audioState=sound?'Sesi etkinleştirmek için “Sesi dene”ye bas.':'Ses kapalı';
-    $('#panel-topbar').insertAdjacentHTML('beforeend',`<div id="approval-bell-wrap"><button id="approval-bell" aria-expanded="false" aria-controls="approval-events"><span aria-hidden="true">🔔</span> <span class="notice-bell-label">Bildirimler</span> <b id="approval-total">0</b></button><section id="approval-events" class="hidden notice-center" aria-label="Bildirim merkezi"><header class="notice-head"><div><span class="notice-eyebrow">PUFFY / YÖNETİM</span><h2>Bildirim merkezi</h2></div><button data-notice="close" aria-label="Bildirim merkezini kapat">×</button></header><div class="notice-summary"><span id="notice-unread"></span><span id="notice-pending"></span></div><p id="notice-connection" role="status"></p><div class="notice-tools"><strong>Son başvurular</strong><button data-notice="read-all">Tümünü okundu işaretle</button></div><div id="notice-list"></div><details class="notice-settings" ${sound?'':'open'}><summary>Ses ve masaüstü ayarları</summary><label class="notice-toggle"><input type="checkbox" id="notice-sound"> Bildirim sesi</label><div class="notice-audio"><label for="notice-volume">Ses düzeyi</label><input id="notice-volume" type="range" min="10" max="100" step="5"><button data-notice="test">Sesi dene</button></div><p id="notice-audio-state" role="status"></p><div class="notice-desktop"><span id="notice-permission"></span><button data-notice="desktop">Masaüstü bildirimlerini aç</button></div><p id="notice-desktop-error" role="status"></p></details><footer id="notice-storage"></footer></section></div>`);
+    $('#panel-topbar').insertAdjacentHTML('beforeend',`<div id="approval-bell-wrap"><button id="approval-bell" aria-expanded="false" aria-controls="approval-events"><svg class="notice-bell-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/><path d="M10 21h4"/></svg> <span class="notice-bell-label">Bildirimler</span> <b id="approval-total">0</b></button><section id="approval-events" class="hidden notice-center" aria-label="Bildirim merkezi"><header class="notice-head"><div><span class="notice-eyebrow">PUFFY / YÖNETİM</span><h2>Bildirim merkezi</h2></div><button data-notice="close" aria-label="Bildirim merkezini kapat">×</button></header><div class="notice-summary"><span id="notice-unread"></span><a id="notice-pending" href="#onay/bekleyenler" data-notice="pending"></a></div><p id="notice-connection" role="status"></p><div class="notice-tools"><strong>Son başvurular</strong><button data-notice="read-all">Tümünü okundu işaretle</button></div><div id="notice-list"></div><details class="notice-settings" ${sound?'':'open'}><summary>Ses ve masaüstü ayarları</summary><label class="notice-toggle"><input type="checkbox" id="notice-sound"> Bildirim sesi</label><div class="notice-audio"><label for="notice-volume">Ses düzeyi</label><input id="notice-volume" type="range" min="10" max="100" step="5"><button data-notice="test">Sesi dene</button></div><p id="notice-audio-state" role="status"></p><div class="notice-desktop"><span id="notice-permission"></span><button data-notice="desktop">Masaüstü bildirimlerini aç</button></div><p id="notice-desktop-error" role="status"></p></details><footer id="notice-storage"></footer></section></div>`);
     $('#approval-bell').onclick=()=>toggle();
     $('#approval-events').addEventListener('click',action);
     $('#notice-sound').checked=sound;$('#notice-volume').value=volume*100;
@@ -55,6 +55,7 @@
     if(link){const r=records.find(r=>r.id===link.dataset.event);if(r)r.read=true;save();toggle(false);render();return;}
     const button=e.target.closest('[data-notice]');if(!button)return;
     switch(button.dataset.notice){
+      case 'pending':toggle(false);break;
       case 'close':toggle(false);$('#approval-bell').focus();break;
       case 'read-all':records.forEach(r=>r.read=true);save();render();break;
       case 'test':await play(true);renderStatus();break;
@@ -107,10 +108,10 @@
   function render(){
     if(!ctx)return;
     const unread=records.filter(r=>!r.read).length;
-    $('#approval-total').textContent=unread>99?'99+':String(unread);
-    $('#approval-bell').classList.toggle('has-unread',unread>0);
-    $('#approval-bell').setAttribute('aria-label',unread+' okunmamış bildirim');
-    $('#notice-unread').textContent=unread+' okunmamış';$('#notice-pending').textContent=pending+' karar bekliyor';
+    $('#approval-total').textContent=pending>99?'99+':String(pending);
+    $('#approval-bell').classList.toggle('has-unread',pending>0);
+    $('#approval-bell').setAttribute('aria-label',pending+' karar bekliyor, '+unread+' okunmamış bildirim');
+    $('#notice-unread').textContent=unread+' okunmamış';$('#notice-pending').textContent=pending+' karar bekliyor →';
     $('#notice-list').innerHTML=records.length?records.map(r=>`<a class="notice-item ${r.read?'':'is-unread'}" data-event="${r.id}" href="${options.path(r.key)}"><span class="notice-dot" aria-hidden="true"></span><span><strong>${ctx.esc(options.label(r.key))}</strong><small>${ctx.esc(ctx.date(r.at))} · ${r.read?'Okundu':'Yeni başvuru'}</small></span><span aria-hidden="true">↗</span></a>`).join(''):'<div class="notice-empty"><strong>Yeni bildirim yok</strong><p>Yeni başvurular burada birikir. Bekleyen işleri Onaylar bölümünden inceleyebilirsin.</p></div>';
     $('#approval-events [data-notice="read-all"]').disabled=!unread;
     document.title=(unread?'('+unread+') ':'')+'Puffy Yönetim';renderStatus();
