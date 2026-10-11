@@ -34,6 +34,10 @@
    if(!ok)throw new Error('GIRIS_BASARISIZ');if(aktif!==a)return;say();
   }catch(e){durum('Dinleme başlatılamadı: '+(c.errorText?c.errorText(e):String(e?.message||e)));}
  }
- root.PuffyOdaDinle={ac,kapat};
+ // Oda gözlemi sayfasındaki düğme (gozlem.js) için ortak bağlam.
+ let bag=null;
+ function init(c){bag=c;}
+ document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('[data-sessiz-dinle]');if(!b||!bag)return;e.preventDefault();ac(bag,b.dataset.odaId,b.dataset.odaAd||('Oda '+b.dataset.odaId.slice(0,8)));});
+ root.PuffyOdaDinle={ac,kapat,init};
  root.addEventListener?.('beforeunload',()=>{kapat();});
 })(window);

@@ -2,7 +2,7 @@
 <html lang="tr">
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net 'sha256-0fPQW8T/zciTncQnxgUL0xIQm3Nw7LFy0d8EzweLWZU='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: blob: https:; media-src 'self' blob: https:; connect-src 'self' https://rjdddbwotczhagdulwco.supabase.co wss://rjdddbwotczhagdulwco.supabase.co https://*.zego.im wss://*.zego.im https://*.zegocloud.com wss://*.zegocloud.com https://*.coolzcloud.com wss://*.coolzcloud.com https://*.coolbcloud.com wss://*.coolbcloud.com https://*.cooldcloud.com wss://*.cooldcloud.com https://*.coolfcloud.com wss://*.coolfcloud.com https://*.coolgcloud.com wss://*.coolgcloud.com; font-src 'self' data: https://fonts.gstatic.com; object-src 'none'; base-uri 'none'; form-action 'self'; frame-src 'none'; worker-src 'self' blob:">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net 'sha256-Sfq/ZJI6VgkgswODAlKPgkC2J99EvNcnbA7ZEbAq488='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: blob: https:; media-src 'self' blob: https:; connect-src 'self' https://rjdddbwotczhagdulwco.supabase.co wss://rjdddbwotczhagdulwco.supabase.co https://*.zego.im wss://*.zego.im https://*.zegocloud.com wss://*.zegocloud.com https://*.coolzcloud.com wss://*.coolzcloud.com https://*.coolbcloud.com wss://*.coolbcloud.com https://*.cooldcloud.com wss://*.cooldcloud.com https://*.coolfcloud.com wss://*.coolfcloud.com https://*.coolgcloud.com wss://*.coolgcloud.com; font-src 'self' data: https://fonts.gstatic.com; object-src 'none'; base-uri 'none'; form-action 'self'; frame-src 'none'; worker-src 'self' blob:">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
 <title>Puffy Yönetim</title>
@@ -185,7 +185,7 @@ button.daha{display:block;width:100%;margin:10px 0;padding:10px;border-radius:10
 <script src="push.js?v=20261012rapor2"></script>
 <script src="yan-hesap.js?v=20261012rapor2"></script>
 <script src="destek.js?v=20261012rapor2"></script>
-<script src="oda-dinle.js?v=20261012rapor2"></script>
+<script src="oda-dinle.js?v=20261012rapor3"></script>
 <script src="guvenilirlik.js?v=20261008audit6"></script>
 <script src="phase2.js?v=20261008audit6"></script>
 <script src="phase3.js?v=20261008audit6"></script>
@@ -196,7 +196,7 @@ button.daha{display:block;width:100%;margin:10px 0;padding:10px;border-radius:10
 <script src="approvals.js?v=20261012rapor2"></script>
 <script src="icerik.js?v=20261008audit6"></script>
 <script src="topluluklar.js?v=20261011a"></script>
-<script src="gozlem.js?v=20261012rapor"></script>
+<script src="gozlem.js?v=20261012rapor3"></script>
 <script src="oyunlar.js?v=20261009a"></script>
 <script src="hediyeler.js?v=20261008audit6"></script>
 <script src="anlar.js?v=20261009a"></script>
@@ -329,6 +329,8 @@ async function panelAc(){
   window.PuffyHata?.init({sb,caps:panelCaps});
   window.PuffyYanHesap?.init({sb,caps:panelCaps});
   window.PuffyDestek?.init({sb,caps:panelCaps});
+  window.PuffyOdaDinle?.init({sb,errorText:e=>String(e?.message||e)});
+  menuDuzenle();
   $('#giris').classList.add('hidden'); $('#uyg').classList.remove('hidden');
   sayfaGit(location.hash.replace('#','') || 'ozet');
   ozetYukle();
@@ -355,6 +357,10 @@ $('#sifre').addEventListener('keydown', e=>{ if(e.key==='Enter') $('#btn-eposta'
 // hassas sayfa açık kalmasın (Codex raporu P1, 2026-10-11).
 async function cikis(){ try{PuffyPhase1.close();}catch(_){} try{window.PuffyHata?.stop();window.PuffyYanHesap?.stop();window.PuffyDestek?.stop();window.PuffyOdaDinle?.kapat();}catch(_){} panelCaps={};panelSession=null;try{sessionStorage.removeItem('puffy_mfa');sessionStorage.removeItem('puffy_giris_zamani');sessionStorage.removeItem('puffy_son_hareket');}catch(_){} location.hash=''; $('#uyg').classList.add('hidden'); $('#giris').classList.remove('hidden'); goster('giris'); let hataVar=false; try{const {error}=await sb.auth.signOut({ scope: 'local' }); hataVar=!!error;}catch(_){hataVar=true;} if(hataVar){ try{for(const k of Object.keys(localStorage)){if(k.startsWith('sb-'))localStorage.removeItem(k);}}catch(_){} toast('Oturum bu cihazda kapatıldı; sunucu çıkışı tamamlanamadı.'); } }
 $('#btn-cikis').onclick = cikis; $('#btn-cikis-giris').onclick = cikis;
+
+// Modüller menü bağlantılarını nav'ın SONUNA ekliyor; o da alttaki "Çıkış" kutusunun
+// altında kalıp görünmüyordu (2026-10-11). Hepsi Çıkış kutusunun üstüne taşınır.
+function menuDuzenle(){const nav=$('#uyg nav'),alt=nav&&nav.querySelector('.alt');if(!alt)return;[...nav.children].filter(e=>e!==alt&&(alt.compareDocumentPosition(e)&Node.DOCUMENT_POSITION_FOLLOWING)).forEach(e=>nav.insertBefore(e,alt));}
 
 // ---------- SAYFALAR ----------
 function sayfaGit(ad){
