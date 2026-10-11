@@ -26,7 +26,7 @@
     d.textContent='Güncellemeyi indir';
     var adim3=document.querySelector('ol.adim li:nth-child(3)'); if(adim3) adim3.innerHTML='Telefon <b>Güncelle</b> derse dokun, bitince <b>Aç</b>. Hesabın ve coinlerin yerinde kalır.';
   }
-  fetch(apk.replace('/Puffy.apk','/surum.json'),{cache:'no-store'}).then(function(c){return c.ok?c.json():null;}).then(function(j){
+  fetch(apk.replace('/Puffy.apk','/surum_apk.json'),{cache:'no-store'}).then(function(c){return c.ok?c.json():null;}).then(function(j){
     if(j&&j.surumAdi){ surum=j.surumAdi; yaz();
       if(guncelleModu&&j.surumKodu){ d.textContent='Güncellemeyi indir · '+j.surumAdi+' ('+mevcut+' → '+j.surumKodu+')';
         if(j.surumKodu<=mevcut){ d.textContent='Sürümün güncel ('+j.surumAdi+')'; document.querySelector('h1+p').textContent='Zaten en yeni sürümü kullanıyorsun; yine de indirip üstüne kurabilirsin.'; } } }
