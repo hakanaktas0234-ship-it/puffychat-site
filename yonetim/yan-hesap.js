@@ -9,9 +9,9 @@
  const sayi=n=>new Intl.NumberFormat('tr-TR').format(Number(n)||0);
  function init(c){stop();ctx=c;if(!c?.caps?.admin)return;const nav=document.createElement('div');nav.id='yan-hesap-nav';nav.innerHTML='<a class="menu" href="#yan-hesap">Yan hesap incelemesi</a>';document.querySelector('#uyg nav')?.append(nav);if(!document.querySelector('#s-yan-hesap')){const s=document.createElement('section');s.id='s-yan-hesap';s.className='hidden';document.querySelector('.workspace')?.append(s);}}
  function stop(){serial++;ctx=null;document.querySelector('#yan-hesap-nav')?.remove();document.querySelector('#s-yan-hesap')?.replaceChildren();}
- function goster(){document.querySelectorAll('.workspace > [id^="s-"]').forEach(e=>e.classList.toggle('hidden',e.id!=='s-yan-hesap'));}
+ function goster(){document.querySelector('#uyg nav')?.classList.remove('open');document.querySelector('#panel-topbar .mobile-menu')?.setAttribute('aria-expanded','false');const rn=document.querySelector('#route-name');if(rn)rn.textContent='Yan hesap incelemesi';document.querySelectorAll('.workspace > [id^="s-"]').forEach(e=>e.classList.toggle('hidden',e.id!=='s-yan-hesap'));}
  function route(hash){const [ad,q]=hash.split('?');if(ad!=='yan-hesap')return false;if(!ctx?.caps?.admin){location.hash='ozet';return true;}goster();const id=new URLSearchParams(q||'').get('kisi');id?dosya(id):kuyruk();return true;}
- const rpc=async(n,a)=>{const {data,error}=await ctx.sb.rpc(n,a);if(error)throw error;return data;};
+ const rpc=async(n,a)=>{const c=ctx;if(!c)throw new Error('NOT_AUTHENTICATED');const {data,error}=await c.sb.rpc(n,a).abortSignal(AbortSignal.timeout(20000));if(ctx!==c)throw new Error('STALE_SESSION');if(error)throw error;return data;};
  const hataMetni=e=>{const m=String(e?.message||e);return m.includes('ALREADY_REVIEWED')?'Bu inceleme zaten sonuçlanmış; dosyayı yenile.':m.includes('REVIEW_REASON_REQUIRED')?'En az 3 karakter gerekçe yaz.':m.includes('TARGET_NOT_FOUND')?'Bu ID ile kullanıcı bulunamadı.':m.includes('MFA_REQUIRED')?'Güvenlik doğrulamanı yenilemek için yeniden giriş yap.':m.includes('NOT_AUTHORIZED')?'Bu işlem için yetkin yok.':'İşlem tamamlanamadı.';};
  function arama(){return '<form data-ara class="panel"><label>Kullanıcı ID (örn. 517468)<input name="kisi" inputmode="numeric" maxlength="40" required></label><button class="primary">Dosyayı aç</button></form>';}
  function baglaArama(r){r.querySelector('[data-ara]').onsubmit=e=>{e.preventDefault();const v=String(new FormData(e.target).get('kisi')||'').trim();if(v)location.hash='yan-hesap?kisi='+encodeURIComponent(v);};}
@@ -19,6 +19,7 @@
   r.innerHTML='<div class="page-title"><div><div class="eyebrow">Güvenlik</div><h1>Yan hesap incelemesi</h1><p>Aynı telefon, aynı bağlantı ve davet ilişkileri tek dosyada. Kararlar senin; sistem yalnız işaretler.</p></div></div>'+arama()+'<section class="panel" data-liste><div class="skeleton"></div></section>';baglaArama(r);
   try{const rows=await rpc('yonetim_yan_hesap_kuyrugu');if(n!==serial)return;
    r.querySelector('[data-liste]').innerHTML='<h2>İncelenmesi önerilenler</h2>'+((rows||[]).length?rows.map(x=>'<a class="approval-row" href="#yan-hesap?kisi='+esc(x.display_id)+'"><span><strong>'+esc(x.nickname)+' #'+esc(x.display_id)+'</strong><small>'+esc(x.sebep)+' · '+esc(t(x.zaman))+'</small></span><span>Dosya →</span></a>').join(''):'<div class="empty-state">Şu an işaretli hesap yok.</div>');
+   r.querySelectorAll('[data-liste] a').forEach(a=>a.onclick=e=>{e.preventDefault();const hash=a.getAttribute('href').slice(1);if(location.hash.slice(1)!==hash)history.pushState(null,'','#'+hash);route(hash);});
   }catch(e){if(n===serial)r.querySelector('[data-liste]').innerHTML='<p role="alert">'+esc(hataMetni(e))+'</p>';}}
  const etiket=(v,ok,no)=>v?'<span class="badge warn">'+ok+'</span>':'<span class="badge ok">'+no+'</span>';
  async function dosya(kimlik){const n=++serial,r=document.querySelector('#s-yan-hesap'),c=ctx;
@@ -46,7 +47,7 @@
     if(hf.dataset.busy==='true')return;
     hf.dataset.busy='true';hf.querySelectorAll('button,textarea').forEach(b=>b.disabled=true);err.textContent='Karar kaydediliyor…';
     try{
-     await c.rpc('yonetim_onay_karari',{p_tur:'hesap_guvenlik',p_id:k.user_id,p_onay:action==='true',p_neden:reason,p_coin:null,p_kod:null});
+     await rpc('yonetim_onay_karari',{p_tur:'hesap_guvenlik',p_id:k.user_id,p_onay:action==='true',p_neden:reason,p_coin:null,p_kod:null});
      if(ctx!==c||n!==serial)return;
      c.toast?.(action==='true'?'Hesap incelemesine izin verildi.':'Hesap incelemesi reddedildi.');dosya(kimlik);
     }catch(error){if(ctx!==c||n!==serial)return;err.textContent=hataMetni(error);hf.dataset.busy='false';hf.querySelectorAll('button,textarea').forEach(b=>b.disabled=false);}
