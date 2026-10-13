@@ -15,6 +15,7 @@
   function stop() {
     epoch++;
     ctx = null;
+    $('#s-oyun-merkezi')?.replaceChildren();
     document.querySelectorAll('dialog.game-operation').forEach(x => x.close());
   }
   function mount() {
