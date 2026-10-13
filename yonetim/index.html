@@ -2,7 +2,7 @@
 <html lang="tr">
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net 'sha256-Sfq/ZJI6VgkgswODAlKPgkC2J99EvNcnbA7ZEbAq488='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: blob: https:; media-src 'self' blob: https:; connect-src 'self' https://rjdddbwotczhagdulwco.supabase.co wss://rjdddbwotczhagdulwco.supabase.co https://*.zego.im wss://*.zego.im https://*.zegocloud.com wss://*.zegocloud.com https://*.coolzcloud.com wss://*.coolzcloud.com https://*.coolbcloud.com wss://*.coolbcloud.com https://*.cooldcloud.com wss://*.cooldcloud.com https://*.coolfcloud.com wss://*.coolfcloud.com https://*.coolgcloud.com wss://*.coolgcloud.com; font-src 'self' data: https://fonts.gstatic.com; object-src 'none'; base-uri 'none'; form-action 'self'; frame-src 'none'; worker-src 'self' blob:">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-SrbVx6P3wyB6gmsTcllcjdBt2qcmVgDWALmxTqmhpSw=' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net ; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: blob: https:; media-src 'self' blob: https:; connect-src 'self' https://rjdddbwotczhagdulwco.supabase.co wss://rjdddbwotczhagdulwco.supabase.co https://*.zego.im wss://*.zego.im https://*.zegocloud.com wss://*.zegocloud.com https://*.coolzcloud.com wss://*.coolzcloud.com https://*.coolbcloud.com wss://*.coolbcloud.com https://*.cooldcloud.com wss://*.cooldcloud.com https://*.coolfcloud.com wss://*.coolfcloud.com https://*.coolgcloud.com wss://*.coolgcloud.com; font-src 'self' data: https://fonts.gstatic.com; object-src 'none'; base-uri 'none'; form-action 'self'; frame-src 'none'; worker-src 'self' blob:">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
 <title>Puffy Yönetim</title>
@@ -208,6 +208,7 @@ button.daha{display:block;width:100%;margin:10px 0;padding:10px;border-radius:10
 <script src="evidence.js?v=20261010c"></script>
 <script src="iletisim.js?v=20261010b"></script>
 <script src="phase1.js?v=20261010c"></script>
+<script src="guvenli-oturum.js?v=20261013session1" integrity="sha384-nt80qMZv06dTn8vyUi1koI58Xs8eX53MRrcNeJGj3AlvmhyDPIqiCOs6JaKm2r4d" crossorigin="anonymous"></script>
 <script>
 // #05 (2026-10-11): başka sitenin çerçevesinde açılırsa panel gösterilmez (clickjacking).
 if(window.top===window.self){document.getElementById('cerceve-kilidi')?.remove();}else{try{window.top.location=window.location.href;}catch(_){}}
@@ -217,9 +218,16 @@ const SB_KEY = 'sb_publishable_TMb-Ldq66Pi3ehxPSYB8JA_aQ-zEeHd';
 // Oturum güvenliği (Claude, 2026-10-02): oturum yalnız bu sekmede tutulur
 // (sekme/tarayıcı kapanınca çıkış). 30 dk işlem yapılmazsa ve girişten
 // 12 saat sonra otomatik çıkış. Eski kalıcı (localStorage) oturum silinir.
-const OTURUM_BOSTA_MS = 30*60*1000, OTURUM_AZAMI_MS = 12*60*60*1000;
+const OTURUM_BOSTA_MS = 15*60*1000, OTURUM_AZAMI_MS = 8*60*60*1000;
 try { Object.keys(localStorage).filter(k=>k.startsWith('sb-')&&k.endsWith('-auth-token')).forEach(k=>localStorage.removeItem(k)); } catch(_){}
-const sb = supabase.createClient(SB_URL, SB_KEY, { auth: { storage: window.sessionStorage, persistSession: true, autoRefreshToken: true } });
+const puffyPanelOturum = new PuffyGuvenliOturum.Session({url:SB_URL,storage:window.sessionStorage,fetch:window.fetch.bind(window),crypto:window.crypto,
+  onLock:neden=>{cikis().then(()=>hata(guvenlikMesaji(neden))).catch(()=>{});},
+  onReauth:()=>{panelKilitle();mfaKontrol(true).catch(()=>hata('Güvenlik doğrulaması yenilenemedi. Yeniden giriş yap.'));}});
+window.puffyPanelOturum=puffyPanelOturum;
+const sb = supabase.createClient(SB_URL, SB_KEY, { global:{fetch:puffyPanelOturum.fetch}, auth: { storage: window.sessionStorage, persistSession: true, autoRefreshToken: true, flowType:'pkce' } });
+['pointerdown','keydown','wheel','touchstart'].forEach(ev=>addEventListener(ev,e=>puffyPanelOturum.touch(e),{passive:true}));
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')puffyPanelOturum.check().catch(()=>{});});
+addEventListener('offline',()=>{if(panelSession)puffyPanelOturum.lock('PANEL_CONNECTION_LOST');});
 window.PuffyHata?.wrap(sb);
 // 2026-10-10 (Hakan: "Şikayetler hep Yükleniyor…"): supabase-js 2.57 sorgu nesnesinin yalnız then'i var, catch'i yok.
 // sb.rpc(...).catch(...) kalıbı (Şikayetler, Shorts, şikayet kararı) TypeError verip sayfayı "Yükleniyor…"da bırakıyordu.
@@ -232,8 +240,8 @@ function hareketKaydet(){ if(panelSession && oturumSuresiDoldu()){ oturumDenetle
 ['pointerdown','keydown','wheel','touchstart'].forEach(ev=>addEventListener(ev, hareketKaydet, {passive:true}));
 function oturumSuresiDoldu(){
   const simdi=Date.now(), son=oturumOku('puffy_son_hareket'), giris=oturumOku('puffy_giris_zamani');
-  if(son && simdi-son > OTURUM_BOSTA_MS) return '30 dakika işlem yapılmadığı için güvenlik amacıyla çıkış yapıldı.';
-  if(giris && simdi-giris > OTURUM_AZAMI_MS) return 'Oturum süresi (12 saat) doldu; yeniden giriş yap.';
+  if(son && simdi-son > OTURUM_BOSTA_MS) return '15 dakika işlem yapılmadığı için güvenlik amacıyla çıkış yapıldı.';
+  if(giris && simdi-giris > OTURUM_AZAMI_MS) return 'Oturum süresi (8 saat) doldu; yeniden giriş yap.';
   return null;
 }
 async function oturumDenetle(){
@@ -252,14 +260,15 @@ function tarih(s){ if(!s) return ''; const d=new Date(s); return d.toLocaleStrin
 function mesaj(e){ const m=(e&&e.message)||String(e); const h={NOT_AUTHORIZED:'Bunun için yetkin yok.',UNAUTHORIZED:'Bunun için yetkin yok.',NOT_ALLOWED:'Bunun için yetkin yok.',ALREADY_REVIEWED:'Bu kayıt başkası tarafından sonuçlandırılmış.',PERSONEL_MUAF:'Personel hesapları banlanamaz.',INVALID_TARGET:'Kendini banlayamazsın.'}; for(const k in h) if(m.includes(k)) return h[k]; return m; }
 
 // ---------- GİRİŞ AKIŞI ----------
-let mfaFactorId = null;
+let mfaFactorId = null, mfaReadyAt=0;
 let panelCaps = {};
 let panelSession = null;
 async function baslat(){
+  if(puffyPanelOturum.wasLocked()){goster('giris');hata('Panel güvenlik amacıyla kilitlendi. Yeniden giriş yap.');return;}
   const { data:{ session } } = await sb.auth.getSession();
   if(!session){ goster('giris'); return; }
   const neden = oturumSuresiDoldu();
-  if(neden){ await sb.auth.signOut({ scope:'local' }); goster('giris'); hata(neden); return; }
+  if(neden){ await cikis(); hata(neden); return; }
   if(!oturumOku('puffy_giris_zamani')) oturumYaz('puffy_giris_zamani', Date.now());
   oturumYaz('puffy_son_hareket', Date.now());
   await mfaKontrol();
@@ -271,10 +280,14 @@ function goster(adim){
   $('#btn-cikis-giris').classList.toggle('hidden', adim==='giris');
   $('#giris').classList.remove('hidden'); $('#uyg').classList.add('hidden');
 }
-async function mfaKontrol(){
+async function mfaKontrol(zorla=false){
+  puffyPanelOturum.ensureKey();
+  const {data:girisHakki,error:girisHata}=await sb.rpc('yonetim_guvenli_giris_hakki');
+  if(girisHata||girisHakki?.allowed!==true){await cikis();hata(girisHata?'Güvenli giriş doğrulanamadı. Yeniden giriş yap.':'Bu hesapta panel erişim yetkisi yok.');return;}
+  if(girisHakki.needs_mfa){zorla=true;mfaReadyAt=Date.now()+1200;}
   hata('');
   const { data: aal } = await sb.auth.mfa.getAuthenticatorAssuranceLevel();
-  if(aal && aal.currentLevel === 'aal2'){ await panelAc(); return; }
+  if(!zorla && aal && aal.currentLevel === 'aal2'){ await panelAc(); return; }
   const { data: f, error } = await sb.auth.mfa.listFactors();
   if(error){ hata(mesaj(error)); return; }
   // DİKKAT: listFactors().totp yalnız doğrulanmışları döner; yarım
@@ -312,9 +325,11 @@ function qrGoster(uri, secret){
 }
 async function kodDogrula(kod){
   if(!/^\d{6}$/.test(kod)){ hata('6 haneli kodu yaz.'); return; }
+  const bekleme=mfaReadyAt-Date.now();if(bekleme>0)await new Promise(r=>setTimeout(r,bekleme));
   const { error } = await sb.auth.mfa.challengeAndVerify({ factorId: mfaFactorId, code: kod });
   if(error){ hata('Kod yanlış ya da süresi geçti. Authenticator\'daki kodu, süresi dolmadan (yeşil çubuk doluyken) yaz.'); return; }
   try { sessionStorage.removeItem('puffy_mfa'); } catch(_){}
+  $('#kod').value='';$('#kod-kur').value='';$('#mfa-secret').textContent='';$('#qr').innerHTML='';
   await panelAc();
 }
 async function panelAc(){
@@ -322,26 +337,34 @@ async function panelAc(){
   if(userError || !user){ goster('giris'); return; }
   const { data: assurance, error: assuranceError } = await sb.auth.mfa.getAuthenticatorAssuranceLevel();
   if(assuranceError || assurance?.currentLevel !== 'aal2'){ goster('dogrula'); hata('Güvenlik doğrulamanı tamamla.'); return; }
-  const access = await PuffyPhase1.authorize(sb,user);
-  if(!access.allowed){ hata('Bu hesapta panel erişim yetkisi yok.'); await sb.auth.signOut({ scope: 'local' }); goster('giris'); return; }
+  try{await puffyPanelOturum.open(sb);}catch(e){
+    if(String(e.message).includes('MFA_REAUTH_REQUIRED')){await mfaKontrol(true);return;}
+    if(String(e.message).includes('PANEL_MFA_APPROVAL_REQUIRED')){goster('dogrula');hata('Bu yeni doğrulayıcı için platform sahibinin bağımsız onayı gerekiyor. Onaydan sonra kodu yeniden gir.');return;}
+    await cikis();hata(guvenlikMesaji(e.message));return;
+  }
+  const securityVersion=puffyPanelOturum.epoch;
+  let access;try{access=await PuffyPhase1.authorize(sb,user);}catch(e){await cikis();hata(guvenlikMesaji(e.message));return;}
+  if(!puffyPanelOturum.active||securityVersion!==puffyPanelOturum.epoch)return;
+  sb.auth.startAutoRefresh();
+  if(!access.allowed){ await cikis(); hata('Bu hesapta panel erişim yetkisi yok.'); return; }
   panelCaps=access.caps; panelSession=user.id;
   PuffyPhase1.open({sb,user,caps:panelCaps});
   window.PuffyHata?.init({sb,caps:panelCaps});
   window.PuffyYanHesap?.init({sb,caps:panelCaps});
   window.PuffyDestek?.init({sb,caps:panelCaps});
   window.PuffyOdaDinle?.init({sb,errorText:e=>String(e?.message||e)});
-  menuDuzenle();
+  menuDuzenle();guvenlikDugmesi();
   $('#giris').classList.add('hidden'); $('#uyg').classList.remove('hidden');
   sayfaGit(location.hash.replace('#','') || 'ozet');
   ozetYukle();
 }
 $('#btn-google').onclick = async () => {
-  hata('');
+  hata('');puffyPanelOturum.freshLogin();
   const { error } = await sb.auth.signInWithOAuth({ provider:'google', options:{ redirectTo: location.origin + location.pathname } });
   if(error) hata(mesaj(error));
 };
 $('#btn-eposta').onclick = async () => {
-  hata('');
+  hata('');puffyPanelOturum.freshLogin();
   const { error } = await sb.auth.signInWithPassword({ email: $('#eposta').value.trim(), password: $('#sifre').value });
   if(error){ hata('E-posta ya da şifre yanlış.'); return; }
   oturumYaz('puffy_giris_zamani', Date.now()); oturumYaz('puffy_son_hareket', Date.now());
@@ -355,7 +378,56 @@ $('#kod-kur').addEventListener('keydown', e=>{ if(e.key==='Enter') $('#btn-kur')
 $('#sifre').addEventListener('keydown', e=>{ if(e.key==='Enter') $('#btn-eposta').click(); });
 // Önce EKRAN kilitlenir, sonra oturum kapatılır: signOut hata verse bile
 // hassas sayfa açık kalmasın (Codex raporu P1, 2026-10-11).
-async function cikis(){ try{PuffyPhase1.close();}catch(_){} try{window.PuffyHata?.stop();window.PuffyYanHesap?.stop();window.PuffyDestek?.stop();window.PuffyOdaDinle?.kapat();}catch(_){} panelCaps={};panelSession=null;try{sessionStorage.removeItem('puffy_mfa');sessionStorage.removeItem('puffy_giris_zamani');sessionStorage.removeItem('puffy_son_hareket');}catch(_){} location.hash=''; $('#uyg').classList.add('hidden'); $('#giris').classList.remove('hidden'); goster('giris'); let hataVar=false; try{const {error}=await sb.auth.signOut({ scope: 'local' }); hataVar=!!error;}catch(_){hataVar=true;} if(hataVar){ try{for(const k of Object.keys(localStorage)){if(k.startsWith('sb-'))localStorage.removeItem(k);}}catch(_){} toast('Oturum bu cihazda kapatıldı; sunucu çıkışı tamamlanamadı.'); } }
+function guvenlikMesaji(neden){
+  const m=String(neden||'');
+  if(m.includes('PANEL_SESSION_REVOKED'))return 'Oturumun iptal edildi veya hesabın başka bir yerde açıldı. Yeniden giriş yap.';
+  if(m.includes('PANEL_SESSION_EXPIRED'))return 'Güvenli oturum süresi doldu. Yeniden giriş yap.';
+  if(m.includes('PANEL_CONNECTION_LOST'))return 'Bağlantı doğrulanamadığı için panel kilitlendi. Bağlantını kontrol edip yeniden giriş yap.';
+  if(m.includes('PANEL_STORAGE_REQUIRED'))return 'Güvenli giriş için bu sekmede oturum depolamasına izin ver.';
+  return 'Güvenli oturum doğrulanamadı. Yeniden giriş yap.';
+}
+function panelKilitle(){
+  try{PuffyPhase1.close();}catch(_){}
+  for(const stop of [()=>window.PuffyHata?.stop(),()=>window.PuffyYanHesap?.stop(),()=>window.PuffyDestek?.stop(),()=>window.PuffyOdaDinle?.kapat()])try{stop();}catch(_){}
+  panelCaps={};panelSession=null;location.hash='';goster('giris');
+  $('#kod').value='';$('#kod-kur').value='';$('#sifre').value='';$('#mfa-secret').textContent='';$('#qr').innerHTML='';
+}
+async function cikis(){
+  panelKilitle();
+  // Persist the lock before any network request; a failed logout/reload cannot reopen.
+  $('#giris').querySelectorAll('button').forEach(b=>b.disabled=true);
+  try{const result=await puffyPanelOturum.end(sb);
+    if(!result.signedOut&&!result.revoked)hata('Panel bu sekmede kilitlendi. Sunucu oturum iptali doğrulanamadı; yeniden giriş yapmadan açılmaz.');
+  }finally{$('#giris').querySelectorAll('button').forEach(b=>b.disabled=false);}
+}
+function guvenlikDugmesi(){
+  const top=$('#panel-topbar');if(top.querySelector('[data-session-security]'))return;
+  const b=document.createElement('button');b.type='button';b.dataset.sessionSecurity='1';b.textContent='Oturum güvenliği';top.append(b);
+  b.onclick=async()=>{
+    if(!panelSession||!puffyPanelOturum.active)return;
+    const d=document.createElement('dialog');d.className='phase2-dialog';
+    const i=puffyPanelOturum.info;
+    d.innerHTML='<h2>Oturum güvenliği</h2><p>Bu hesap için tek aktif yönetim oturumu vardır. Yeni giriş önceki oturumu kapatır.</p><p>15 dakika hareketsizlikte kilitlenir. En geç 8 saatte yeniden giriş gerekir.</p><p>Hassas işlemlerde son 15 dakika içinde doğrulama kodu istenir.</p><p>Oturum bitişi: '+esc(new Date(i.expires_at).toLocaleString('tr-TR'))+'</p><div data-mfa-approvals></div><p role="alert"></p><button data-security-close>Kapat</button><button data-security-logout>Bu oturumu kapat</button>';
+    document.body.append(d);d.showModal();d.addEventListener('close',()=>d.remove());
+    d.querySelector('[data-security-close]').onclick=()=>d.close();
+    d.querySelector('[data-security-logout]').onclick=()=>{d.close();return cikis();};
+    if(panelCaps.owner){
+      const version=puffyPanelOturum.epoch;
+      const {data,error}=await sb.rpc('yonetim_guvenli_mfa_bekleyenler');
+      if(!d.isConnected||version!==puffyPanelOturum.epoch)return;
+      if(error){d.querySelector('[role=alert]').textContent=guvenlikMesaji(error.message);return;}
+      const root=d.querySelector('[data-mfa-approvals]');
+      root.innerHTML='<h3>Yeni doğrulayıcı onayları</h3><p>Hesap sahibini bağımsız kanaldan doğrulamadan onaylama. Kendi yeni doğrulayıcını bu oturumla onaylayamazsın.</p>'+(data.rows.length?data.rows.map(x=>'<section><p>'+esc(x.nickname||'Hesap')+' · '+esc(x.display_id||'')+'</p><small>'+esc(x.factor_id)+'</small><button data-factor="'+esc(x.factor_id)+'">Doğruladım, onayla</button></section>').join(''):'<p>Bekleyen yeni doğrulayıcı yok.</p>');
+      root.querySelectorAll('[data-factor]').forEach(b=>b.onclick=async()=>{
+        if(!confirm('Bu hesabın sahibini bağımsız bir kanaldan doğruladığını ve yeni doğrulayıcıya yönetim erişimi verdiğini onaylıyor musun?'))return;
+        b.disabled=true;const v=puffyPanelOturum.epoch;
+        const {error}=await sb.rpc('yonetim_guvenli_mfa_onayla',{p_factor:b.dataset.factor});
+        if(!d.isConnected||v!==puffyPanelOturum.epoch)return;
+        if(error){d.querySelector('[role=alert]').textContent=mesaj(error);b.disabled=false;}else b.closest('section').remove();
+      });
+    }
+  };
+}
 $('#btn-cikis').onclick = cikis; $('#btn-cikis-giris').onclick = cikis;
 
 // Modüller menü bağlantılarını nav'ın SONUNA ekliyor; o da alttaki "Çıkış" kutusunun
@@ -510,7 +582,7 @@ let authBusy=false;
 });
 sb.auth.onAuthStateChange((event,session)=>{
   if(event==='SIGNED_OUT' || (event!=='INITIAL_SESSION'&&!session)){
-    panelSession=null;panelCaps={};PuffyPhase1.close();goster('giris');
+    if(panelSession)cikis().catch(()=>{});else panelKilitle();
   }
 });
 baslat().catch(()=>{hata('Giriş kontrolü tamamlanamadı. Sayfayı yenileyip tekrar dene.');goster('giris');});
