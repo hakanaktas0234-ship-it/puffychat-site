@@ -20,7 +20,7 @@
  function bindImages(root){root.querySelectorAll('img').forEach(i=>i.onerror=()=>{const n=document.createElement('span');n.className='initial-avatar';n.textContent='?';i.replaceWith(n);});}
  const tag=x=>`<span class="tag ${x==='aktif'?'good':x==='kapali'?'bad':''}">${esc(statuses[x]||x||'—')}</span>`;
  function signal(r){return `${r.online?'<span class="tag good">● Çevrimiçi sinyali</span>':'<span class="tag">Güncel sinyal yok</span>'}<small>Son görülme: ${esc(ctx.date(r.last_seen_at))}</small>`;}
- function room(r){return r.room_id?`<span>${esc(r.room_name||'Oda')} · ${esc(r.room_display_id||'—')}</span><small>Oda sinyali: ${esc(ctx.date(r.room_signal_at))}</small>`:'<span class="muted">Görünür oda sinyali yok</span>';}
+ function room(r){return r.room_id?`<a href="#oda-gozlem/${esc(r.room_id)}">${esc(r.room_name||'Oda')} · ${esc(r.room_display_id||'—')}</a><small>Oda sinyali: ${esc(ctx.date(r.room_signal_at))}</small>`:'<span class="muted">Görünür oda sinyali yok</span>';}
  function parsed(){const [path,q]=location.hash.slice(1).split('?'),[type,id]=path.split('/');return {type,id,params:new URLSearchParams(q||'')};}
  function jump(type,id,params){const q=params.toString();location.hash=type+(id?'/'+id:'')+(q?'?'+q:'');}
  function pager(total,offset){return `<div class="pager"><span>${fmt(total)} kayıt · ${total?fmt(offset+1)+'–'+fmt(Math.min(offset+25,total)):'0'}</span><button data-prev ${offset===0?'disabled':''}>Önceki</button><button data-next ${offset+25>=total?'disabled':''}>Sonraki</button></div>`;}
