@@ -11,7 +11,7 @@
  const saat=t=>{try{return new Date(t||Date.now()).toLocaleTimeString('tr-TR',{hour:'2-digit',minute:'2-digit'});}catch{return '';}};
  const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
  const safeUrl=value=>{if(typeof value!=='string'||!value.trim())return '';try{const u=new URL(String(value||''),location.href);return u.protocol==='https:'&&!u.username&&!u.password?u.href:'';}catch{return '';}};
- const yetkili=c=>!!c?.sb&&(!c.caps||c.caps.admin===true)&&(!root.puffyPanelOturum||root.puffyPanelOturum.active===true);
+ const yetkili=c=>!!c?.sb&&(!c.caps||c.caps.admin===true)&&root.puffyPanelOturum?.active===true;
  function sdk(){
   if(root.ZegoExpressEngine)return Promise.resolve();
   return sdkSoz??=new Promise((ok,ko)=>{
@@ -24,7 +24,7 @@
  }
 
  function temizle(a){
-  if(!a||a.cleaned)return;a.cleaned=true;clearInterval(a.kisiZaman);clearTimeout(a.adBekleyen);clearTimeout(a.yenileZaman);clearTimeout(a.bitisZaman);clearTimeout(a.loginZaman);
+  if(!a||a.cleaned)return;a.cleaned=true;clearInterval(a.kisiZaman);clearInterval(a.oturumZaman);clearTimeout(a.adBekleyen);clearTimeout(a.yenileZaman);clearTimeout(a.bitisZaman);clearTimeout(a.loginZaman);
   for(const el of a.akislar.values()){try{el.pause?.();el.srcObject=null;el.remove();}catch{}}
   try{for(const id of a.akislar.keys())Promise.resolve(a.zg?.stopPlayingStream(id)).catch(()=>{});}catch{}a.akislar.clear();
   const destroy=()=>{try{a.zg?.destroyEngine?.();}catch{}};
@@ -37,7 +37,7 @@
  async function ac(c,odaGiris,ad){
   kapat();
   if(!yetkili(c))return;
-  const version=serial;
+  const version=serial,session=root.puffyPanelOturum,epoch=session.epoch;
   const dlg=document.createElement('dialog');dlg.className='oda-ekrani';
   dlg.innerHTML=`<header class="oe-ust"><div><div class="eyebrow">Görünmez giriş · odadakiler seni görmez</div><h2 data-ad>${esc(ad||'Oda')}</h2><small data-durum role="status">Bağlanıyor…</small></div>
    <div class="oe-araclar"><label>Ses <input data-ses type="range" min="0" max="100" value="80"></label><button data-kapat class="danger">Odadan çık</button></div></header>
@@ -47,7 +47,8 @@
    <p class="note oe-alt">Konuşamaz, yazamaz, koltuğa oturamazsın. Bu giriş yönetim kaydına yazılır. Ses kaydı tutulmaz.</p><div data-sesler hidden></div>`;
   document.body.append(dlg);dlg.showModal();
   const a={zg:null,oda:null,akislar:new Map(),dlg};aktif=a;
-  const valid=()=>aktif===a&&!a.closed&&serial===version&&dlg.open&&yetkili(c);
+  const valid=()=>aktif===a&&!a.closed&&serial===version&&dlg.open&&yetkili(c)&&root.puffyPanelOturum===session&&session.epoch===epoch&&(!a.deadline||Date.now()<a.deadline);
+  a.oturumZaman=setInterval(()=>{if(aktif===a&&!valid())kapat();},500);
   const $=q=>dlg.querySelector(q),durum=t=>{const p=$('[data-durum]');if(p)p.textContent=t;};
   $('[data-kapat]').onclick=()=>{if(aktif===a)kapat();};dlg.onclose=()=>{if(aktif===a)kapat();else dlg.remove();};
   dlg.querySelectorAll('[data-sek]').forEach(b=>b.onclick=()=>{dlg.querySelectorAll('[data-sek]').forEach(x=>x.classList.toggle('primary',x===b));$('[data-sohbet]').hidden=b.dataset.sek!=='sohbet';$('[data-kisiler]').hidden=b.dataset.sek!=='kisiler';});
@@ -120,7 +121,8 @@
    if(!ok)throw new Error('Zego girişi başarısız'+(a.sonKod?' (kod '+a.sonKod+')':''));if(!valid())return;say();
    const arm=data=>{
     clearTimeout(a.bitisZaman);clearTimeout(a.yenileZaman);
-    a.bitisZaman=setTimeout(()=>{if(valid()){durum('Dinleme süresi doldu. Yeniden giriş yap.');a.closed=true;temizle(a);}},Math.max(0,data.localDeadline-Date.now()));
+    a.deadline=data.localDeadline;
+    a.bitisZaman=setTimeout(()=>{if(aktif===a&&!a.closed){durum('Dinleme süresi doldu. Yeniden giriş yap.');a.closed=true;temizle(a);}},Math.max(0,data.localDeadline-Date.now()));
     a.yenileZaman=setTimeout(async()=>{if(!valid())return;try{const next=await bilet(true);if(!valid())return;await zg.renewToken(next.token,a.oda);if(valid())arm(next);}catch(e){if(valid()){durum('Dinleme durduruldu: '+String(e?.message||e));a.closed=true;temizle(a);}}},Math.max(1000,data.localDeadline-Date.now()-30000));
    };arm(data);
   }catch(e){if(!valid())return;a.closed=true;temizle(a);const m=String(e?.message||e);durum('Odaya girilemedi: '+m);try{root.PuffyHata?.kaydet({rpc:'zego_login',kod:(m.match(/kod (\d+)/)||[])[1]||'ZEGO',sinif:'zego'});}catch{}}
@@ -130,4 +132,7 @@
  root.PuffyOdaDinle={ac,kapat,init};
  root.addEventListener?.('hashchange',()=>{kapat();});
  root.addEventListener?.('beforeunload',()=>{kapat();});
+ root.addEventListener?.('pagehide',()=>{kapat();});
+ root.addEventListener?.('offline',()=>{kapat();});
+ document.addEventListener('visibilitychange',()=>{if(aktif&&(!yetkili(bag)||(aktif.deadline&&Date.now()>=aktif.deadline)))kapat();});
 })(window);
