@@ -5,8 +5,11 @@
 (function(){
   'use strict';
   let ctx=null;
+  let konum='ust';
+  const baslik=()=>konum==='ust'?'Üst bannerlar':'İlk 4 odanın altındaki bannerlar';
+  const sekmeler=()=>`<div class="panel-head"><button data-konum="ust" aria-pressed="${konum==='ust'}">Üst bannerlar</button><button data-konum="oda_alti" aria-pressed="${konum==='oda_alti'}">İlk 4 odanın altı</button></div>`;
   const $=s=>document.querySelector(s);
-  const KOD_AD={ozel_id:'Özel ID',yarisma:'Moment yarışması',pk_sampiyon:'PK Ligi şampiyonu',ajans_ligi:'Ajans ligi',aylik_yukleme:'Aylık yükleme',aile_ligi:'Aile ligi',cp:'CP haftalık',kedi_ligi:'Kedi ligi',yoldas_ligi:'Yoldaş ligi',taraftar_ligi:'Taraftar Ligi'};
+  const KOD_AD={ozel_id:'Özel ID',yarisma:'Moment yarışması',pk_sampiyon:'PK Ligi şampiyonu',ajans_ligi:'Ajans ligi',aylik_yukleme:'Aylık yükleme',aile_ligi:'Aile ligi',cp:'CP haftalık',kedi_ligi:'Kedi ligi',yoldas_ligi:'Yoldaş ligi',taraftar_ligi:'Taraftar Ligi',oda_alti_etkinlikler:'Onaylı etkinlik afişleri',oda_alti_destek:'Destek odası'};
   const HEDEF_AD={yok:'Dokununca bir şey olmaz',oda:'Odaya git (oda numarası)',profil:'Profile git (kullanıcı ID)',rota:'Uygulama sayfası (ör. /events)',url:'İnternet bağlantısı (https://…)'};
   const SB_URL='https://rjdddbwotczhagdulwco.supabase.co';
   const publicUrl=p=>p?SB_URL+'/storage/v1/object/public/'+p.split('/').map(encodeURIComponent).join('/'):'';
@@ -28,13 +31,13 @@
   async function bannerlar(){
     if(!ctx?.caps.admin){location.hash='ozet';return}
     const c=ctx;goster();const root=$('#s-icerik');
-    root.innerHTML='<h1>Ana sayfa bannerları</h1><p class="note">Uygulamanın ana sayfasındaki kayan bannerlar. Sıra, görünürlük ve yeni görsel bannerlar buradan yönetilir; uygulama güncellemesi gerekmez. Değişiklikler kullanıcılara en geç 5 dakikada yansır.</p><div class="skeleton"></div>';
+    root.innerHTML='<h1>Ana sayfa bannerları</h1><p class="note">Uygulamanın ana sayfasındaki kayan bannerlar. Sıra, görünürlük ve yeni görsel bannerlar buradan yönetilir; uygulama güncellemesi gerekmez. Üst ve ilk 4 odanın altındaki alan ayrı yönetilir. Yeni uygulama sürümünde görünürlük yaklaşık 1 dakikada yenilenir.</p><div class="skeleton"></div>';
     try{
-      const rows=await c.rpc('ana_banner_listesi_admin');if(ctx!==c||location.hash!=='#bannerlar')return;
+      const secilenKonum=konum;const all=await c.rpc('ana_banner_listesi_admin');if(secilenKonum!==konum)return;const rows=all.filter(r=>(r.konum||'ust')===konum);if(ctx!==c||location.hash!=='#bannerlar')return;
       const simdi=Date.now();
       const durum=r=>!r.aktif?['Gizli','']:(r.baslangic&&new Date(r.baslangic).getTime()>simdi)?['Zamanı gelmedi','']:(r.bitis&&new Date(r.bitis).getTime()<=simdi)?['Süresi doldu','']:['Yayında','ok'];
-      root.innerHTML=`<h1>Ana sayfa bannerları</h1><p class="note">Uygulamanın ana sayfasındaki kayan bannerlar. Sıra, görünürlük ve yeni görsel bannerlar buradan yönetilir; uygulama güncellemesi gerekmez. Değişiklikler kullanıcılara en geç 5 dakikada yansır.</p>
-      <div class="panel-head"><h2>${rows.length} banner</h2><button data-yeni>+ Yeni görsel banner</button></div>
+      root.innerHTML=`<h1>Ana sayfa bannerları</h1><p class="note">Uygulamanın ana sayfasındaki kayan bannerlar. Sıra, görünürlük ve yeni görsel bannerlar buradan yönetilir; uygulama güncellemesi gerekmez. Üst ve ilk 4 odanın altındaki alan ayrı yönetilir. Yeni uygulama sürümünde görünürlük yaklaşık 1 dakikada yenilenir.</p>
+      ${sekmeler()}<h2>${baslik()}</h2><div class="panel-head"><h2>${rows.length} banner</h2><button data-yeni>+ Yeni görsel banner</button></div>
       <div class="banner-liste">${rows.map((r,i)=>{const[d,cl]=durum(r);return `<div class="banner-satir" data-id="${c.esc(r.id)}">
         <div class="banner-sira"><button data-yukari="${i}" ${i===0?'disabled':''} aria-label="Yukarı taşı">▲</button><button data-asagi="${i}" ${i===rows.length-1?'disabled':''} aria-label="Aşağı taşı">▼</button></div>
         <div class="banner-onizleme">${r.tur==='gorsel'?`<img src="${c.esc(publicUrl(r.gorsel_path))}" alt="">`:`<span>Uygulamadaki hazır banner</span>`}</div>
@@ -42,6 +45,7 @@
         <span class="tag ${cl}">${d}</span>
         <div class="banner-islem"><button data-duzenle="${i}">Düzenle</button><button data-gizle="${i}">${r.aktif?'Gizle':'Göster'}</button>${r.tur==='gorsel'?`<button data-sil="${i}" class="tehlike">Sil</button>`:''}</div>
       </div>`}).join('')}</div>`;
+      root.querySelectorAll('[data-konum]').forEach(b=>b.onclick=()=>{konum=b.dataset.konum;bannerlar()});
       root.querySelector('[data-yeni]').onclick=()=>duzenle(null);
       root.querySelectorAll('[data-duzenle]').forEach(b=>b.onclick=()=>duzenle(rows[+b.dataset.duzenle]));
       root.querySelectorAll('[data-gizle]').forEach(b=>b.onclick=async()=>{const r=rows[+b.dataset.gizle];b.disabled=true;try{await c.rpc('ana_banner_kaydet',{p:Object.assign({},r,{aktif:!r.aktif})});c.toast(r.aktif?'Banner gizlendi.':'Banner yayında.');bannerlar()}catch(e){b.disabled=false;c.toast(hata(e))}});
@@ -63,7 +67,7 @@
   function duzenle(r){
     const c=ctx,yeni=!r,yerlesik=r&&r.tur==='yerlesik',dlg=document.createElement('dialog');dlg.className='genis';
     let gorselPath=r?.gorsel_path||'',dosya=null;
-    dlg.innerHTML=`<h2>${yeni?'Yeni görsel banner':'Banner düzenle'}</h2><form>
+    dlg.innerHTML=`<h2>${yeni?'Yeni görsel banner':'Banner düzenle'}</h2><p class="note">Alan: ${c.esc(baslik())}</p><form>
       ${yerlesik?`<p class="note">Bu, uygulamadaki hazır bir banner (${c.esc(KOD_AD[r.kod]||r.kod)}). Görseli ve hedefi uygulamada; burada yalnız başlığı, görünürlüğü ve tarihleri değişir.</p>`:`
       <label>Görsel <small>(önerilen 1200×400 px, 3:1 oranında, en fazla 2 MB; JPG, PNG veya WebP)</small><input type="file" name="gorsel" accept="image/jpeg,image/png,image/webp"></label>
       <div class="banner-on-cerceve"><div class="banner-on" id="bannerOn">${gorselPath?`<img src="${c.esc(publicUrl(gorselPath))}" alt="Önizleme">`:'<span>Görsel seçilmedi</span>'}</div><small id="bannerOlcu"></small></div>`}
@@ -97,7 +101,7 @@
       btn.disabled=true;let yuklenen=null;
       try{
         if(dosya){const uz={'image/jpeg':'jpg','image/png':'png','image/webp':'webp'}[dosya.type];const ad=(crypto.randomUUID?crypto.randomUUID():Date.now()+'-'+Math.random().toString(16).slice(2))+'.'+uz;const yol='bannerlar/'+ad;const up=await c.sb.storage.from('media-assets').upload(yol,dosya,{contentType:dosya.type,cacheControl:'31536000',upsert:false});if(up.error)throw up.error;yuklenen=yol;gorselPath='media-assets/'+yol}
-        const p={id:r?.id||'',baslik:f.baslik.value.trim(),gorsel_path:gorselPath,hedef_tur:tur,hedef_deger:tur==='yok'?'':deger,baslangic:bas,bitis:bit,aktif:f.aktif.checked,sira:r?.sira};
+        const p={konum:r?.konum||konum,id:r?.id||'',baslik:f.baslik.value.trim(),gorsel_path:gorselPath,hedef_tur:tur,hedef_deger:tur==='yok'?'':deger,baslangic:bas,bitis:bit,aktif:f.aktif.checked,sira:r?.sira};
         await c.rpc('ana_banner_kaydet',{p});
         if(r&&dosya&&r.gorsel_path&&r.gorsel_path!==gorselPath){c.sb.storage.from('media-assets').remove([r.gorsel_path.replace(/^media-assets\//,'')]).catch(()=>{})}
         dlg.close();c.toast(yeni?'Banner eklendi.':'Banner kaydedildi.');bannerlar();
