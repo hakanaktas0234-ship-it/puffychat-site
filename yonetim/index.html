@@ -130,11 +130,11 @@ button.daha{display:block;width:100%;margin:10px 0;padding:10px;border-radius:10
     <a class="menu" href="#call-host" data-sayfa="call-host" hidden><span>Call Host aktifliği</span></a>
     <a class="menu" href="#kasa" data-sayfa="kasa" hidden><span>Kasa geçmişi</span></a>
     <a class="menu" href="#oyun-kasasi" data-sayfa="oyun-kasasi" hidden><span>Oyunlar</span></a>
-    <div id="approval-nav"></div><div id="hediye-nav"></div><div id="anlar-nav"></div><div id="bakim-nav"></div><div id="ayar-nav"></div><div class="alt"><div id="kim"></div><button id="btn-cikis">Çıkış</button></div>
+    <div id="approval-nav"></div><div id="hediye-nav"></div><div id="anlar-nav"></div><div id="paylasim-nav"></div><div id="bakim-nav"></div><div id="ayar-nav"></div><div class="alt"><div id="kim"></div><button id="btn-cikis">Çıkış</button></div>
   </nav>
   <main><header class="topbar" id="panel-topbar"></header><div class="workspace">
     <div id="s-hediye" class="hidden"></div>
-    <div id="s-anlar" class="hidden"></div>
+    <div id="s-anlar" class="hidden"></div><div id="s-paylasimlar" class="hidden"></div>
     <div id="s-bakim" class="hidden"></div>
     <div id="s-ayarlar" class="hidden"></div>
     <div id="s-gozlem" class="hidden"></div>
@@ -200,6 +200,7 @@ button.daha{display:block;width:100%;margin:10px 0;padding:10px;border-radius:10
 <script src="oyunlar.js?v=20261009a"></script>
 <script src="hediyeler.js?v=20261008audit6"></script>
 <script src="anlar.js?v=20261009a"></script>
+<script src="paylasimlar.js?v=20261014a"></script>
 <script src="bakim.js?v=20261009a"></script>
 <script src="oyun-ayari.js?v=20261008audit6"></script>
 <script src="ayarlar.js?v=20261013tcmb1"></script>
@@ -209,7 +210,7 @@ button.daha{display:block;width:100%;margin:10px 0;padding:10px;border-radius:10
 <script src="oyun-merkezi.js?v=20261014id2"></script>
 <script src="evidence.js?v=20261010c"></script>
 <script src="iletisim.js?v=20261010b"></script>
-<script src="phase1.js?v=20261010c"></script>
+<script src="phase1.js?v=20261014content1"></script>
 <script src="banli-liste.js?v=20261013search1"></script>
 <script src="menu-arama.js?v=20261013search1"></script>
 <script src="bayiler.js?v=20261013bayi1"></script>
@@ -450,6 +451,7 @@ function sayfaGit(ad){
   if(window.PuffyModeration&&PuffyModeration.route(ad)){PuffyPhase1.route(ad);return;}
   if(window.PuffyOdemeler&&PuffyOdemeler.route(ad)){PuffyPhase1.route(ad);return;}
   if(window.PuffyHediyeler&&PuffyHediyeler.route(ad)){PuffyPhase1.route(ad);return;}
+  if(window.PuffyPaylasimlar&&PuffyPaylasimlar.route(ad)){PuffyPhase1.route(ad);return;}
   if(window.PuffyAnlar&&PuffyAnlar.route(ad)){PuffyPhase1.route(ad);return;}
   if(window.PuffyBakim&&PuffyBakim.route(ad)){PuffyPhase1.route(ad);return;}
   if(window.PuffyAyarlar&&PuffyAyarlar.route(ad)){PuffyPhase1.route(ad);return;}
