@@ -1,7 +1,7 @@
 /* Finansal istek günlüğü. Şifre saklanmaz; belirsiz istek yeni kimlikle gönderilmez. */
 (function(root){
  'use strict';
- const operations=new Set(['platform_coin_islemi','platform_vip_ver','platform_bayi_stok_islemi','yonetim_odeme_islemi']);
+ const operations=new Set(['platform_coin_islemi','platform_vip_ver','platform_bayi_stok_islemi','bayi_stok_islemi_v2','yonetim_odeme_islemi']);
  const canonical=x=>JSON.stringify(x,(_,v)=>v&&typeof v==='object'&&!Array.isArray(v)?Object.fromEntries(Object.keys(v).sort().map(k=>[k,v[k]])):v);
  const clean=p=>Object.fromEntries(Object.entries(p).filter(([k])=>!['p_odeme_sifresi','p_request_id'].includes(k)));
  // #04 (2026-10-11): günlük sekme kapanınca kaybolmasın. sessionStorage verilirse
