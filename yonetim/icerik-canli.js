@@ -1,0 +1,10 @@
+/* Live management feeds: authenticated snapshots, no direct table subscription. */
+(()=>{'use strict';let active=null;const signature=x=>JSON.stringify(x,(key,value)=>key==='as_of'?undefined:value);
+function stop(){const a=active;active=null;if(a){clearTimeout(a.timer);a.bar.remove();}}
+function start({root,read,initial,refresh,current}){stop();const route=location.hash,a={root,read,signature:signature(initial),refresh,current,timer:null,busy:false};active=a;const bar=document.createElement('div');bar.className='content-live';bar.innerHTML='<span role="status" aria-live="polite">● Otomatik güncelleme açık · 15 sn</span><button>Yenile</button>';a.bar=bar;root.prepend(bar);const status=bar.querySelector('span'),button=bar.querySelector('button');
+const valid=()=>active===a&&current()&&root.isConnected&&location.hash===route&&!root.classList.contains('hidden');
+const occupied=()=>document.querySelector('dialog[open]')||root.contains(document.activeElement)&&document.activeElement.matches('input,textarea,select')||[...root.querySelectorAll('video')].some(v=>!v.paused&&!v.ended);
+button.onclick=()=>{if(valid()){stop();refresh();}};
+async function tick(){if(!valid()){stop();return;}if(document.hidden){a.timer=setTimeout(tick,15000);return;}if(a.busy)return;a.busy=true;try{const result=await read();if(!valid())return;const changed=signature(result)!==a.signature;status.textContent='● Güncel · '+new Date().toLocaleTimeString('tr-TR',{hour:'2-digit',minute:'2-digit',second:'2-digit'});if(changed){status.textContent='● Yeni içerik veya değişiklik var';button.textContent='Güncellemeyi göster';if(!occupied()){stop();refresh();return;}}}catch(e){if(valid()){status.textContent='Bağlantı bekleniyor · Son veriler korunuyor';bar.classList.add('waiting');}}finally{a.busy=false;if(valid())a.timer=setTimeout(tick,15000);}}
+a.timer=setTimeout(tick,15000);a.tick=tick;return a;}
+addEventListener('hashchange',stop);addEventListener('pagehide',stop);document.addEventListener('visibilitychange',()=>{if(!document.hidden&&active&&!active.busy){clearTimeout(active.timer);active.tick();}});window.PuffyIcerikCanli={start,stop};})();
