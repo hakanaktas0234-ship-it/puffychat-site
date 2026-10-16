@@ -54,7 +54,7 @@
  function table(head,rows){return rows.length?'<div class="table-wrap"><table class="data-table responsive"><thead><tr>'+head.map(h=>'<th>'+h+'</th>').join('')+'</tr></thead><tbody>'+rows.map(row=>{let i=0;return row.replace(/<td>/g,()=>'<td data-label="'+esc(head[i++])+'">');}).join('')+'</tbody></table></div>':'<p class="empty-state">Bu bölümde kayıt yok.</p>';}
  function list(d){root.querySelector('[data-body]').innerHTML='<form data-search class="filters"><label>İsim veya ID<input name="query" maxlength="100" value="'+esc(query)+'" placeholder="Bayi adı, özel ID veya kullanıcı ID"></label><button>Ara</button><button type="button" data-clear>Temizle</button></form>'+table(['Bayi','Kullanılabilir stok','Ayrılan stok','Bekleyen yükleme'],d.rows.map(x=>'<tr><td><a href="#bayiler/'+esc(x.id)+'">'+esc(x.nickname||'İsimsiz bayi')+'</a><small>ID '+esc(x.display_id)+(x.vanity_id?' · '+esc(x.vanity_id):'')+'</small></td><td>'+num(x.balance)+' coin</td><td>'+num(x.reserved)+' coin</td><td>'+num(x.pending_topups)+'</td></tr>'))+pager(d)+'<p class="note">Yeni bayi atamak için kullanıcı detayındaki Bayi durumu bölümünü açın.</p>';bindPager();root.querySelector('[data-search]').onsubmit=e=>{e.preventDefault();query=new FormData(e.target).get('query').trim();page=0;render();};root.querySelector('[data-clear]').onclick=()=>{query='';page=0;render();};}
  function detail(d){const p=d.profile;root.querySelector('[data-body]').innerHTML='<div class="bayi-overview"><div><h2>'+esc(p.nickname||'İsimsiz bayi')+'</h2><a href="#kullanici/'+esc(p.user_id)+'">Kullanıcı profili · ID '+esc(p.display_id)+'</a><p>'+ (p.is_dealer?'Aktif bayi':'Bayilik sona ermiş')+'</p></div><div><small>Kullanılabilir stok</small><strong>'+num(d.balance)+' <small>coin</small></strong></div></div><div class="bayi-tabs" role="navigation" aria-label="Bayi bölümleri">'+Object.entries({satis:'Satışlar',yukleme:'Yükleme talepleri',stok:'Stok hareketleri',gecmis:'Bayilik geçmişi'}).map(([k,v])=>'<button data-tab="'+k+'" aria-pressed="'+(tab===k)+'">'+v+'</button>').join('')+'</div><div data-history></div>'+pager(d)+(c.caps.owner?'<details class="bayi-action"><summary>Güvenli stok işlemi</summary><p>Ödeme şifresi ve son 15 dakika içinde MFA doğrulaması gerekir. Sonucu belirsiz işlem aynı istek kimliğiyle tekrar denenir.</p><form data-stock class="filters"><label>İşlem türü<select name="mode"><option value="wholesale">Toptan alım</option><option value="adjustment">Gerekçeli manuel düzeltme</option></select></label><label>İşlem<select name="direction"><option value="gonder">Stok yükle</option><option value="geri_cek">Stok geri çek</option></select></label><label>Coin<input name="coin" type="number" min="1" max="500000000" step="1" required></label><label>Tutar<input name="amount" type="number" min="0" step="0.01" required></label><label>Para birimi<select name="currency"><option value="TRY">TL (TRY)</option><option value="USD">USD</option></select></label><label>İşlem nedeni<input name="reason" minlength="3" maxlength="300" required></label><label>Tahsilat / düzeltme referansı<input name="reference" minlength="6" maxlength="160" required></label><label><input name="confirmed" type="checkbox" required> Ödemeyi veya düzeltme belgesini kontrol ettim</label><label>Ödeme şifresi<input name="password" type="password" autocomplete="off" required></label><button type="button" data-quote>Hesabı yenile</button><button type="submit">İşlemi kaydet</button><p data-stock-result role="status"></p></form></details>':'');bindPager();root.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{tab=b.dataset.tab;page=0;render();});
- if(c.caps.owner)window.PuffyDealerCredit.mount({root:root.querySelector('[data-body]'),c,dealer:id,alive:valid,journal,onChanged:render});
+ if(c.caps.owner)window.PuffyDealerCredit.mount({root:root.querySelector('[data-body]'),c,dealer:id,dealerLabel:d.profile.display_id||id.slice(0,8),alive:valid,journal,onChanged:render});
  const heads=tab==='satis'?['Alıcı','Coin / tutar','Durum','Tarih']:tab==='yukleme'?['Tutar','Coin','Durum','Dekont','İşlem']:tab==='stok'?['İşlem','Coin','Stok sonrası','Neden']:['İşlem','Neden','Yönetici','Tarih'];
  const rows=d.rows.map(x=>{let cells;if(tab==='satis')cells=['<a href="#kullanici/'+esc(x.buyer_id)+'">'+esc(x.buyer_name||'Kullanıcı')+'</a>',num(x.amount_coin)+' / '+num(x.price_try)+' TRY',esc(labels[x.status]||x.status)+(x.status==='pending'&&new Date(x.expires_at)<new Date()?' · İade bekliyor':''),esc(date(x.created_at))];else if(tab==='yukleme')cells=[num(x.amount_try)+' TRY',num(x.amount_coins),esc(labels[x.status]||x.status),x.receipt_path&&c.caps.owner?'<button data-receipt="'+esc(x.id)+'">Dekontu aç</button>':'Dekont yok',x.status==='pending'&&c.caps.owner?'<button data-topup="'+esc(x.id)+'">İncele</button>':esc(date(x.created_at))];else if(tab==='stok')cells=[esc(labels[x.yon]||x.yon),num(x.miktar),num(x.sonraki_bakiye),esc(x.neden)];else cells=[esc(labels[x.action]||x.action),esc(x.reason||'—'),'<a href="#kullanici/'+esc(x.admin_id)+'">Yönetici profili</a>',esc(date(x.created_at))];return '<tr>'+cells.map(v=>'<td>'+v+'</td>').join('')+'</tr>';});root.querySelector('[data-history]').innerHTML=table(heads,rows);
  root.querySelectorAll('[data-receipt]').forEach(b=>b.onclick=async()=>{
@@ -110,7 +110,19 @@
   const coins = value => Number(value || 0).toLocaleString('tr-TR');
   const error = e => errors[e?.message] || String(e?.message || e);
 
-  async function mount({root,c,dealer,alive,journal,onChanged}) {
+  function suggestedFields({kind,amount,currency,coin,dealerLabel,stamp,token}) {
+    const tag={limit:'LIMIT',stok:'STOK',tahsilat:'TAHSILAT'}[kind];
+    const id=String(dealerLabel).replace(/[^a-zA-Z0-9-]/g,'').slice(0,40);
+    const value=money(amount)+' '+currency;
+    return {
+      reference:kind==='tahsilat'?'':`BAYI-${id}-${tag}-${stamp}-${token}`,
+      reason:kind==='limit'?`Bayi ${dealerLabel} için açık hesap limitinin ${value} olarak belirlenmesi.`:
+        kind==='stok'?`${value} borç karşılığında ${coins(coin)} coin bayi stoku verilmesi. Peşin tahsilat yapılmamıştır.`:
+        `${value} gerçek tahsilatın bayi açık hesap borcundan düşülmesi.`,
+    };
+  }
+
+  async function mount({root,c,dealer,dealerLabel=dealer.slice(0,8),alive,journal,onChanged}) {
     if (!c.caps.owner) return;
     const box=document.createElement('section');box.className='panel bayi-action';
     box.setAttribute('aria-label','Bayi açık hesabı');root.append(box);
@@ -152,12 +164,23 @@
     let pending=journal.list().find(x=>!x.expired&&x.name===name&&x.target===dealer);
     const mapping={kind:'p_tur',amount:'p_tutar',currency:'p_para_birimi',coin:'p_beklenen_coin',reference:'p_reference',reason:'p_reason'};
     let serial=0,timer=null,quoteKey=null;
+    const stamp=new Intl.DateTimeFormat('en-CA',{timeZone:'Europe/Istanbul',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date()).replace(/-/g,'');
+    const token=crypto.randomUUID().replace(/-/g,'').slice(0,12).toUpperCase();
+    const manual={reference:false,reason:false};
+    for(const field of Object.keys(manual))f[field].addEventListener('input',()=>{manual[field]=f[field].value.trim()!=='';});
+    const help=document.createElement('p');help.className='note';help.textContent='Referans ve gerekçe otomatik hazırlanır; düzenleyebilirsiniz. Gerçek tahsilatta banka dekontunun referansını girin.';form.before(help);
+    function autofill(){
+      if(pending)return;
+      const values=suggestedFields({kind:f.kind.value,amount:Number(f.amount.value)||0,currency:f.currency.value,coin:Number(f.coin.value)||0,dealerLabel,stamp,token});
+      for(const field of Object.keys(manual))if(!manual[field])f[field].value=values[field];
+      f.confirmed.checked=false;
+    }
     const signature=()=>f.kind.value+'|'+f.amount.value+'|'+f.currency.value;
     async function quote(){
       const version=++serial;quoteKey=null;submit.disabled=true;
       const kind=f.kind.value;
       f.currency.disabled=kind!=='tahsilat';if(kind!=='tahsilat')f.currency.value='USD';
-      f.amount.min=kind==='limit'?'0':'0.01';f.coin.value='0';
+      f.amount.min=kind==='limit'?'0':'0.01';f.coin.value='0';autofill();
       box.querySelector('[data-credit-confirm]').textContent=kind==='tahsilat'?'Gerçek ödemeyi ve dekontu kontrol ettim':kind==='limit'?'Bu bayi için açık hesap limitini onaylıyorum':'USD borç kaydını ve mutabakatı onaylıyorum; peşin ödeme alınmadı';
       const amount=Number(f.amount.value),key=signature();
       if(!f.amount.value||!Number.isFinite(amount)||amount<0||amount>1000000||(kind!=='limit'&&amount===0)){message.textContent='Geçerli tutarı girin.';return;}
@@ -170,7 +193,7 @@
       try{const q=await rpc('platform_bayi_teklif_hesapla',{p_tutar:amount,p_para_birimi:'USD'});
         if(!valid()||version!==serial||signature()!==key)return;
         if(!Number.isSafeInteger(q.toplam_coin)||q.toplam_coin<=0)throw new Error('Geçerli stok teklifi alınamadı.');
-        f.coin.value=String(q.toplam_coin);quoteKey=key;
+        f.coin.value=String(q.toplam_coin);autofill();quoteKey=key;
         submit.disabled=q.toplam_coin>500000000||amount>Number(summary.kullanilabilir_usd);
         message.textContent=money(amount)+' USD borç · '+coins(q.taban_coin)+' taban + %'+coins(q.bonus_yuzde)+' bonus = '+coins(q.toplam_coin)+' coin. Peşin tahsilat: 0 USD.'+(submit.disabled?' Limit yetersiz; önce açık hesap limitini kontrol edin.':'');
       }catch(e){if(valid()&&version===serial){message.textContent=error(e);submit.disabled=true;}}
