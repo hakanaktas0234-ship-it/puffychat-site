@@ -5,6 +5,7 @@
   const displayName = value => String(value??'').normalize('NFKC').replace(/[\p{M}\p{Cf}]/gu,'').replace(/[^\p{L}\p{N}\s._-]/gu,' ').replace(/\s+/g,' ').trim() || String(value||'İsimsiz');
   const kinds = {dm:'DM mesajı',coin_event:'Etkinlik ödülü',coin_gift:'Coin hediyesi'};
   const messages = {
+    TARGET_NOT_FOUND:'Bu ID ile aktif bir kullanıcı bulunamadı. Kullanıcının profilinde şu an görünen ID’yi kontrol et.',
     STAFF_RECIPIENT_CHANGED:'Alıcılardan birinin bilgileri veya görevi değişti. Listeyi yenileyip yeni önizleme oluştur.',
     PREVIEW_EXPIRED:'Bu önizlemenin 30 dakikalık süresi doldu. Yeni önizleme oluştur.',
     COIN_BATCH_LIMIT:'Coin gönderimi için en fazla 30 personel seç.',
@@ -30,7 +31,7 @@
     const {root,esc}=c,selected=new Map();let offset=0,query='',generation=0;
     root.innerHTML=`<div class="personel-heading"><div><small>ERİŞİM YÖNETİMİ</small><h1>Personel ve yetki</h1><p>Görevleri yönet. Seçtiğin ekibe mesaj veya coin ödülü gönder.</p></div><button data-add class="primary">Personel görevlendir</button></div>
       <div class="personel-principles"><div><strong>VIP 4</strong><span>Admin görevi boyunca</span></div><div><strong>ID’yi sen seç</strong><span>Müşteri hizmetleri 1000 · Admin 1001–1999</span></div><div><strong>Göreve bağlı haklar</strong><span>Görev bitince özel ID geri alınır; satın alınmış VIP korunur.</span></div></div>
-      <section class="panel personel-workspace"><form data-search class="personel-toolbar"><label>Personel ara<input name="query" maxlength="100" placeholder="İsim veya ID"></label><button>Ara</button><span data-count></span></form><div data-list aria-live="polite"></div><div class="pager"><button data-prev>Önceki</button><span data-page></span><button data-next>Sonraki</button></div></section>
+      <section class="panel personel-workspace"><form data-search class="personel-toolbar"><label>Personel veya kullanıcı ID’si<input name="query" maxlength="100" placeholder="Personel adı veya mevcut kullanıcı ID’si"></label><button>Ara</button><span data-count></span></form><p class="note">İsimle mevcut personeli ara. Yeni personel için kullanıcının mevcut ID’sini yaz; hesabı bulup görev verebilirsin.</p><div data-list aria-live="polite"></div><div data-candidate aria-live="polite"></div><div class="pager"><button data-prev>Önceki</button><span data-page></span><button data-next>Sonraki</button></div></section>
       <section class="panel personel-bulk"><div><small>SEÇİLİ EKİP</small><h2>Mesaj ve ödül</h2><p>Alıcıları yukarıdaki listeden seç. Göndermeden önce kişi listesini ve toplamı göreceksin.</p><div data-selected></div></div><form data-bulk><label>İşlem<select name="kind"><option value="dm">DM mesajı</option><option value="coin_event">Coin · Etkinlik ödülü</option><option value="coin_gift">Coin · Hediye</option></select></label><label data-amount hidden>Kişi başına coin<input name="amount" type="number" min="1" max="50000000" step="1" inputmode="numeric"></label><label>Mesaj<textarea name="message" maxlength="3500" rows="3" required placeholder="Seçilen personellere iletilecek mesaj"></textarea></label><label>İşlem nedeni<input name="reason" minlength="3" maxlength="290" required placeholder="İşlem kütüğüne kaydedilir"></label><p data-total class="personel-total" aria-live="polite"></p><p class="note">DM: en fazla 50 kişi. Coin: en fazla 30 kişi; mevcut saatlik ve günlük kasa sınırları geçerlidir.</p><p role="alert" data-bulk-error></p><button class="primary" data-preview disabled>Alıcıları ve işlemi incele</button></form></section>
       <section class="panel"><div class="personel-toolbar"><h2>Son toplu işlemler</h2><button data-history-refresh>Yenile</button></div><div data-history></div></section><div data-pending-role></div>`;
     const $=s=>root.querySelector(s),bulk=$('[data-bulk]');
@@ -44,13 +45,24 @@
     bulk.elements.kind.onchange=()=>{const coin=bulk.elements.kind.value!=='dm';$('[data-amount]').hidden=!coin;bulk.elements.amount.required=coin;bulk.elements.message.required=!coin;selection();};
     bulk.elements.amount.oninput=selection;
     async function load() {
-      const gen=++generation;$('[data-list]').textContent='Personeller yükleniyor…';
+      const gen=++generation;$('[data-candidate]').replaceChildren();$('[data-list]').textContent='Personeller yükleniyor…';
       try {
         const data=await c.rpc('yonetim_personel_hak_listesi',{p_query:query,p_limit:25,p_offset:offset});if(!c.isCurrent()||gen!==generation)return;
         $('[data-count]').textContent=fmt(data.total)+' personel';$('[data-page]').textContent=data.total?`${offset+1}–${Math.min(offset+25,data.total)}`:'0';$('[data-prev]').disabled=offset===0;$('[data-next]').disabled=offset+25>=data.total;
         $('[data-list]').innerHTML=data.rows.length?`<div class="personel-table-wrap"><table class="personel-table"><thead><tr><th>Seç</th><th>Personel</th><th>Roller</th><th>Görev hakları</th><th>İşlem</th></tr></thead><tbody>${data.rows.map(p=>`<tr><td><input type="checkbox" data-select="${esc(p.user_id)}" aria-label="${esc(displayName(p.nickname))} seç" ${selected.has(p.user_id)?'checked':''}></td><td><a class="personel-name" href="#kullanici/${esc(p.user_id)}">${esc(displayName(p.nickname))}</a><small class="personel-id">ID ${esc(p.display_id)}</small></td><td>${p.roles.map(r=>`<span class="tag">${esc(c.roleName(r))}</span>`).join('')||'—'}</td><td>${p.gorev_vip?'<span class="personel-vip">VIP 4 · Görev</span>':'<span class="muted">Görev VIP’si yok</span>'}${p.gorev_id?`<small class="personel-id">Görev ID ${esc(p.gorev_id)}</small>`:''}</td><td><button data-edit="${esc(p.user_id)}">Düzenle</button></td></tr>`).join('')}</tbody></table></div>`:'<p class="note">Eşleşen personel yok.</p>';
         $('[data-list]').querySelectorAll('[data-select]').forEach(el=>el.onchange=()=>{const p=data.rows.find(p=>p.user_id===el.dataset.select);if(el.checked){if(selected.size>=50){el.checked=false;c.toast('En fazla 50 personel seç.');return;}selected.set(p.user_id,p);}else selected.delete(p.user_id);selection();});
         $('[data-list]').querySelectorAll('[data-edit]').forEach(el=>el.onclick=()=>edit(data.rows.find(p=>p.user_id===el.dataset.edit)));
+        if(!data.rows.length && /^[1-9][0-9]*$/.test(query)) {
+          const id=Number(query),candidate=$('[data-candidate]');
+          if(!Number.isSafeInteger(id)){candidate.textContent='Geçerli bir kullanıcı ID’si yaz.';return;}
+          candidate.textContent='Kullanıcı hesabı aranıyor…';
+          try {
+            const person=await c.rpc('yonetim_personel_hak_bul',{p_display_id:id});
+            if(!c.isCurrent()||gen!==generation)return;
+            candidate.innerHTML=`<section class="panel"><h2>Kullanıcı bulundu</h2><p class="personel-name">${esc(displayName(person.nickname))} <span class="personel-id">ID ${esc(person.display_id)}</span></p><p class="note">Bu hesap henüz personel listesinde değil. Rol ve görev ID’sini sonraki adımda seçip kaydedeceksin.</p><button type="button" class="primary" data-appoint>Görevlendir</button></section>`;
+            candidate.querySelector('[data-appoint]').onclick=()=>edit(person);
+          }catch(ex){if(c.isCurrent()&&gen===generation)candidate.textContent=error(c,ex);}
+        }
       }catch(e){if(c.isCurrent()&&gen===generation)$('[data-list]').textContent=error(c,e);}
     }
     $('[data-search]').onsubmit=e=>{e.preventDefault();query=e.target.elements.query.value.trim();offset=0;load();};$('[data-prev]').onclick=()=>{offset=Math.max(0,offset-25);load();};$('[data-next]').onclick=()=>{offset+=25;load();};
