@@ -115,7 +115,7 @@
     const id=String(dealerLabel).replace(/[^a-zA-Z0-9-]/g,'').slice(0,40);
     const value=money(amount)+' '+currency;
     return {
-      reference:kind==='tahsilat'?'':`BAYI-${id}-${tag}-${stamp}-${token}`,
+      reference:`BAYI-${id}-${tag}-${stamp}-${token}`,
       reason:kind==='limit'?`Bayi ${dealerLabel} için açık hesap limitinin ${value} olarak belirlenmesi.`:
         kind==='stok'?`${value} borç karşılığında ${coins(coin)} coin bayi stoku verilmesi. Peşin tahsilat yapılmamıştır.`:
         `${value} gerçek tahsilatın bayi açık hesap borcundan düşülmesi.`,
@@ -168,7 +168,7 @@
     const token=crypto.randomUUID().replace(/-/g,'').slice(0,12).toUpperCase();
     const manual={reference:false,reason:false};
     for(const field of Object.keys(manual))f[field].addEventListener('input',()=>{manual[field]=f[field].value.trim()!=='';});
-    const help=document.createElement('p');help.className='note';help.textContent='Referans ve gerekçe otomatik hazırlanır; düzenleyebilirsiniz. Gerçek tahsilatta banka dekontunun referansını girin.';form.before(help);
+    const help=document.createElement('p');help.className='note';help.textContent='Referans ve gerekçe otomatik hazırlanır; düzenleyebilirsiniz. Tahsilat referansı banka dekont numarası değildir. Dekont numaranız varsa otomatik referansın yerine yazabilirsiniz. Aynı ödemeyi tekrar kaydetmeyin.';form.before(help);
     function autofill(){
       if(pending)return;
       const values=suggestedFields({kind:f.kind.value,amount:Number(f.amount.value)||0,currency:f.currency.value,coin:Number(f.coin.value)||0,dealerLabel,stamp,token});
