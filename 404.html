@@ -41,6 +41,10 @@
   if (parca.length !== 2) return;
 
   var tur = parca[0];
+  if ((tur === 'shorts' || tur === 's') && /^[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i.test(parca[1])) {
+    location.replace('/shorts/?v=' + encodeURIComponent(parca[1]));
+    return;
+  }
   // Kimlik adres cubugundan geliyor: METIN olarak basilir, HTML olarak asla.
   var kimlik = decodeURIComponent(parca[1]).slice(0, 64);
   var baslik, aciklama;
