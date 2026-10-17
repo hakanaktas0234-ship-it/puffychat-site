@@ -155,6 +155,7 @@
       box.querySelector('[data-credit-page]').textContent=`${data.total} hareket · Sayfa ${page+1}`;
     }
     drawHistory(summary);
+    window.PuffyDealerStatement?.mount({box,rpc,dealer,dealerLabel,valid});
     for(const [selector,step] of [['[data-credit-prev]',-1],['[data-credit-next]',1]])box.querySelector(selector).onclick=async()=>{
       const next=page+step;if(next<0)return;box.querySelectorAll('.pager button').forEach(b=>b.disabled=true);
       try{const data=await rpc('yonetim_bayi_cari_ozet',{p_bayi:dealer,p_limit:25,p_offset:next*25});if(valid()){page=next;drawHistory(data);}}
