@@ -16,14 +16,41 @@
     const boundDealer = String(dealer);
     let documentFile = null;
     const section=document.createElement('section');section.className='bayi-action';
-    section.innerHTML='<h4>Bayiye gönderilecek cari hesap ekstresi</h4><div class="filters"><label>Başlangıç<input type="date" data-from></label><label>Bitiş<input type="date" data-to></label><button type="button" data-preview>Ekstre oluştur</button><button type="button" data-download disabled>PDF indir</button><button type="button" data-share disabled>PDF paylaş</button><button type="button" data-print disabled>Yazdır</button></div><p role="status" data-status></p><div data-output></div>';
+    section.innerHTML='<h4>Bayiye gönderilecek cari hesap ekstresi</h4><div class="filters" role="group" aria-label="Ekstre dönemi"><button type="button" data-period="month">Bu ay</button><button type="button" data-period="previous">Geçen ay</button><button type="button" data-period="thirty">Son 30 gün</button><button type="button" data-period="all">Tüm hareketler</button><button type="button" data-period="custom">Özel tarih</button></div><p data-period-summary aria-live="polite"></p><div data-custom-dates hidden><label>Başlangıç<input type="date" data-from></label><label>Bitiş<input type="date" data-to></label></div><div class="filters"><button type="button" data-preview>Ekstre oluştur</button><button type="button" data-download disabled>PDF indir</button><button type="button" data-share disabled>PDF paylaş</button><button type="button" data-print disabled>Yazdır</button></div><p role="status" data-status></p><div data-output></div>';
     box.append(section);
     const button=section.querySelector('[data-preview]'),print=section.querySelector('[data-print]'),status=section.querySelector('[data-status]'),output=section.querySelector('[data-output]');
     const from=section.querySelector('[data-from]'),to=section.querySelector('[data-to]');
     const download=section.querySelector('[data-download]'),share=section.querySelector('[data-share]');
     function invalidate(){documentFile=null;download.disabled=share.disabled=print.disabled=true;}
     let generation=0;
-    for(const input of [from,to])input.oninput=()=>{generation++;output.replaceChildren();invalidate();status.textContent='Tarih aralığı değişti; ekstreyi yeniden oluşturun.';};
+    const dates=section.querySelector('[data-custom-dates]');
+    const periodSummary=section.querySelector('[data-period-summary]');
+    const periodButtons=section.querySelectorAll('[data-period]');
+    function showPeriod(){
+      periodSummary.textContent='Seçilen dönem: '+window.PuffyStatementCore.periodLabel(from.value,to.value)+' · Türkiye saati';
+    }
+    function changed(){
+      generation++;output.replaceChildren();invalidate();showPeriod();
+      status.textContent='Dönem değişti; ekstreyi yeniden oluşturun.';
+    }
+    function choosePeriod(kind){
+      dates.hidden=kind!=='custom';
+      const names={month:'Bu ay',previous:'Geçen ay',thirty:'Son 30 gün',all:'Tüm hareketler',custom:'Özel tarih'};
+      for(const control of periodButtons){
+        const selected=control.dataset.period===kind;
+        control.setAttribute('aria-pressed',String(selected));
+        control.textContent=(selected?'✓ ':'')+names[control.dataset.period];
+      }
+      if(kind!=='custom'){
+        const range=window.PuffyStatementCore.period(kind);
+        from.value=range.start;to.value=range.end;
+      }
+      changed();
+    }
+    for(const control of periodButtons)control.onclick=()=>choosePeriod(control.dataset.period);
+    for(const input of [from,to])input.oninput=changed;
+    choosePeriod('month');
+    status.textContent='Bu ay seçili. Önceki borç, devreden borç olarak hesaba katılır.';
     button.onclick=async()=>{
       const run=++generation, start=from.value, end=to.value;
       const current=()=>valid()&&run===generation;
@@ -51,9 +78,9 @@
         function line(text){lines.push(text);const p=document.createElement('p');p.textContent=text;output.append(p);}
         line('Bayi: '+dealerName+' · Bayi ID: '+displayId+' · Düzenlenme: '+date(new Date())+' · Saat dilimi: Europe/Istanbul');
         line('Hesap kimliği: '+boundDealer);
-        line('Dönem: '+(from.value||'İlk hareket')+' — '+(to.value||'Bugün'));
+        line('Dönem: '+window.PuffyStatementCore.periodLabel(start,end));
         line('Güncel limit: '+number(snapshot.limit_usd)+' USD · Güncel borç: '+number(snapshot.borc_usd)+' USD · Kullanılabilir limit: '+number(snapshot.kullanilabilir_usd)+' USD');
-        line('Dönem başı borç: '+number(totals.opening)+' USD');
+        line('Devreden borç: '+number(totals.opening)+' USD');
         line('TOPLAM YÜKLENEN COIN: '+(totals.coin+prepaidIn).toLocaleString('tr-TR')+' · Geri çekilen: '+prepaidOut.toLocaleString('tr-TR'));
         line('KAYITLI TOPLAM ÖDEMELER: '+number(paidTotals.TRY/100)+' TL + '+number(paidTotals.USD/100)+' USD');
         line('Toplam borç karşılığı stok bedeli: '+number(totals.stock)+' USD');

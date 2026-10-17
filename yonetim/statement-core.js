@@ -58,5 +58,27 @@
     const label = String(displayId).replace(/[^a-zA-Z0-9-]/g, '').slice(0, 40);
     return `Puffy-Bayi-${label}-${dealer}-${start || 'ilk'}-${end || 'bugun'}.pdf`;
   }
-  window.PuffyStatementCore = { summarize, filename };
+  function period(kind, now = new Date()) {
+    const parts = new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'Europe/Istanbul', year: 'numeric', month: '2-digit', day: '2-digit'
+    }).formatToParts(now);
+    const part = key => Number(parts.find(p => p.type === key).value);
+    const year = part('year'), month = part('month'), today = part('day');
+    const key = (y, m, d) => new Date(Date.UTC(y, m - 1, d)).toISOString().slice(0, 10);
+    const end = key(year, month, today);
+    switch (kind) {
+      case 'month': return { start: key(year, month, 1), end };
+      case 'previous': return { start: key(year, month - 1, 1), end: key(year, month, 0) };
+      case 'thirty': return { start: key(year, month, today - 29), end };
+      case 'all': return { start: '', end };
+      default: throw new Error('Geçersiz dönem.');
+    }
+  }
+  function periodLabel(start, end) {
+    const pretty = key => new Intl.DateTimeFormat('tr-TR', {
+      timeZone: 'UTC', day: 'numeric', month: 'long', year: 'numeric'
+    }).format(new Date(key + 'T12:00:00Z'));
+    return (start ? pretty(start) : 'İlk hareket') + ' — ' + (end ? pretty(end) : 'Bugün');
+  }
+  window.PuffyStatementCore = { summarize, filename, period, periodLabel };
 })();
