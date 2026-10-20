@@ -12,7 +12,7 @@
  function goster(){document.querySelector('#uyg nav')?.classList.remove('open');document.querySelector('#panel-topbar .mobile-menu')?.setAttribute('aria-expanded','false');const rn=document.querySelector('#route-name');if(rn)rn.textContent='Yan hesap incelemesi';document.querySelectorAll('.workspace > [id^="s-"]').forEach(e=>e.classList.toggle('hidden',e.id!=='s-yan-hesap'));}
  function route(hash){const [ad,q]=hash.split('?');if(ad!=='yan-hesap')return false;if(!ctx?.caps?.admin){location.hash='ozet';return true;}goster();const id=new URLSearchParams(q||'').get('kisi');id?dosya(id):kuyruk();return true;}
  const rpc=async(n,a)=>{const c=ctx;if(!c)throw new Error('NOT_AUTHENTICATED');const {data,error}=await c.sb.rpc(n,a).abortSignal(AbortSignal.timeout(20000));if(ctx!==c)throw new Error('STALE_SESSION');if(error)throw error;return data;};
- const hataMetni=e=>{const m=String(e?.message||e);return m.includes('ALREADY_REVIEWED')?'Bu inceleme zaten sonuçlanmış; dosyayı yenile.':m.includes('REVIEW_REASON_REQUIRED')?'En az 3 karakter gerekçe yaz.':m.includes('TARGET_NOT_FOUND')?'Bu ID ile kullanıcı bulunamadı.':m.includes('MFA_REQUIRED')?'Güvenlik doğrulamanı yenilemek için yeniden giriş yap.':m.includes('NOT_AUTHORIZED')?'Bu işlem için yetkin yok.':'İşlem tamamlanamadı.';};
+ const hataMetni=e=>{const m=String(e?.message||e);return m.includes('ALREADY_REVIEWED')?'Bu inceleme zaten sonuçlanmış; dosyayı yenile.':m.includes('REVIEW_REASON_REQUIRED')?'3–200 karakter karar gerekçesi yaz.':m.includes('TARGET_NOT_FOUND')?'Bu ID ile kullanıcı bulunamadı.':m.includes('MFA_REQUIRED')?'Güvenlik doğrulamanı yenilemek için yeniden giriş yap.':m.includes('NOT_AUTHORIZED')?'Bu işlem için yetkin yok.':m.includes('REVIEW_CHANGED')?'Karar değişti. Dosyayı yenileyip yeniden kontrol et.':m.includes('ACTIVE_ACCOUNT_BAN')?'Bu hesapta aktif ban var. Yan hesap izni banı kaldırmaz.':m.includes('ACTIVE_DEVICE_BAN')?'Bu cihazda aktif ban var. Yan hesap izni banı kaldırmaz.':m.includes('REQUEST_NOT_FOUND')?'İzin verilecek inceleme kaydı yok. Önce hesap engellenen cihazdan giriş denemesi yapmalı.':'İşlem tamamlanamadı.';};
  function arama(){return '<form data-ara class="panel"><label>Kullanıcı ID (örn. 517468)<input name="kisi" inputmode="numeric" maxlength="40" required></label><button class="primary">Dosyayı aç</button></form>';}
  function baglaArama(r){r.querySelector('[data-ara]').onsubmit=e=>{e.preventDefault();const v=String(new FormData(e.target).get('kisi')||'').trim();if(v)location.hash='yan-hesap?kisi='+encodeURIComponent(v);};}
  async function kuyruk(){const n=++serial,r=document.querySelector('#s-yan-hesap');
@@ -23,7 +23,7 @@
   }catch(e){if(n===serial)r.querySelector('[data-liste]').innerHTML='<p role="alert">'+esc(hataMetni(e))+'</p>';}}
  const etiket=(v,ok,no)=>v?'<span class="badge warn">'+ok+'</span>':'<span class="badge ok">'+no+'</span>';
  async function dosya(kimlik){const n=++serial,r=document.querySelector('#s-yan-hesap'),c=ctx;
-  r.innerHTML='<div class="page-title"><div><div class="eyebrow">Yan hesap incelemesi</div><h1>Dosya</h1></div><div><a class="menu" href="#yan-hesap">← Liste</a></div></div>'+arama()+'<section data-dosya><div class="skeleton"></div></section>';baglaArama(r);
+  r.innerHTML='<div class="page-title"><div><div class="eyebrow">Yan hesap incelemesi</div><h1>Dosya</h1></div><div><a class="menu" href="#yan-hesap">← Liste</a></div></div>'+arama()+'<section data-dosya><div class="skeleton"></div></section>';baglaArama(r);r.querySelector('[data-ara] input').value=kimlik;
   try{const d=await rpc('yonetim_yan_hesap_dosyasi',{p_kimlik:kimlik});if(n!==serial)return;const k=d.kisi||{},g=d.guvenlik,de=d.davet_eden,dt=d.davet_ettikleri||{};
    const kazanc=Object.entries(dt.kazanc||{}).map(([a,b])=>esc(a)+': '+sayi(b)).join(' · ')||'—';
    r.querySelector('[data-dosya]').innerHTML=
@@ -47,7 +47,8 @@
     if(hf.dataset.busy==='true')return;
     hf.dataset.busy='true';hf.querySelectorAll('button,textarea').forEach(b=>b.disabled=true);err.textContent='Karar kaydediliyor…';
     try{
-     await rpc('yonetim_onay_karari',{p_tur:'hesap_guvenlik',p_id:k.user_id,p_onay:action==='true',p_neden:reason,p_coin:null,p_kod:null});
+     if(g?.durum==='red'&&action==='true')await rpc('yonetim_yan_hesap_yeniden_izin',{p_user:k.user_id,p_karar_at:g.karar_at||null,p_neden:reason});
+     else await rpc('yonetim_onay_karari',{p_tur:'hesap_guvenlik',p_id:k.user_id,p_onay:action==='true',p_neden:reason,p_coin:null,p_kod:null});
      if(ctx!==c||n!==serial)return;
      c.toast?.(action==='true'?'Hesap incelemesine izin verildi.':'Hesap incelemesi reddedildi.');dosya(kimlik);
     }catch(error){if(ctx!==c||n!==serial)return;err.textContent=hataMetni(error);hf.dataset.busy='false';hf.querySelectorAll('button,textarea').forEach(b=>b.disabled=false);}
@@ -56,12 +57,12 @@
     f.querySelectorAll('button').forEach(b=>b.disabled=true);try{await rpc('yonetim_davet_karar_kayitli',{p_davet_edilen:f.dataset.karar,p_onay:secim==='true',p_neden:String(fd.get('neden')||'')});ctx.toast?.('Davet kararı kaydedildi.');dosya(kimlik);}catch(err){f.querySelector('[role=alert]').textContent=hataMetni(err);f.querySelectorAll('button').forEach(b=>b.disabled=false);}});
   }catch(e){if(n===serial)r.querySelector('[data-dosya]').innerHTML='<p role="alert">'+esc(hataMetni(e))+'</p>';}}
  function hesapKarari(g,k,c){
-  if(!g)return '<section class="panel"><h2>Hesap erişim kararı</h2><p>Bu hesap için bekleyen güvenlik incelemesi yok.</p></section>';
+  if(!g)return '<section class="panel"><h2>Hesap erişim kararı</h2><p>Bu hesap için güvenlik incelemesi kaydı yok. İzin verilecek cihazı belirlemek için hesap önce engellendiği cihazdan giriş denemesi yapmalı. ID’ye genel veya sonraki hesaplara geçerli izin verilmez.</p></section>';
   const labels={bekliyor:'İnceleme bekliyor',onay:'İzin verildi',red:'Reddedildi'};
   let html='<section class="panel"><h2>Hesap erişim kararı</h2><p><strong>'+esc(labels[g.durum]||g.durum)+'</strong></p>';
-  if(g.durum!=='bekliyor')return html+'<dl class="key-values"><div><dt>Gerekçe</dt><dd>'+esc(g.karar_notu||'—')+'</dd></div><div><dt>Karar tarihi</dt><dd>'+esc(t(g.karar_at))+'</dd></div><div><dt>Karar veren</dt><dd>'+esc(g.karar_veren||g.karar_by||'—')+'</dd></div></dl></section>';
+  if(g.durum!=='bekliyor'&&g.durum!=='red')return html+'<dl class="key-values"><div><dt>Gerekçe</dt><dd>'+esc(g.karar_notu||'—')+'</dd></div><div><dt>Karar tarihi</dt><dd>'+esc(t(g.karar_at))+'</dd></div><div><dt>Karar veren</dt><dd>'+esc(g.karar_veren||g.karar_by||'—')+'</dd></div></dl></section>';
   if(!c.caps.owner)return html+'<p>Karar yetkisi yalnız platform sahibinde.</p></section>';
-  return html+'<p class="note">İzin ver: hesap incelemesi onaylanır; mevcut hesap ve cihaz banları kaldırılmaz. Reddet: inceleme nedeniyle erişim kapalı kalır. Davet kazancı ayrı değerlendirilir.</p><form data-hesap-karar><label>Karar gerekçesi<textarea name="neden" required minlength="3" maxlength="200"></textarea></label><div class="dialog-actions"><button type="submit" class="primary" data-hesap-onay="true">İzin ver</button><button type="submit" class="tehlike" data-hesap-onay="false">Reddet</button></div><p role="alert" aria-live="polite"></p></form></section>';
+  return html+(g.durum==='red'?'<dl class="key-values"><div><dt>Önceki ret gerekçesi</dt><dd>'+esc(g.karar_notu||'—')+'</dd></div><div><dt>Önceki karar</dt><dd>'+esc(t(g.karar_at))+' · '+esc(g.karar_veren||g.karar_by||'—')+'</dd></div></dl>':'')+'<p class="note">İzin yalnız bu hesaba ve incelemedeki cihaza aittir. Yeni açılan diğer hesaplar bu izni devralmaz. İzin ver: hesap incelemesi onaylanır; mevcut hesap ve cihaz banları kaldırılmaz. Reddet: inceleme nedeniyle erişim kapalı kalır. Davet kazancı ayrı değerlendirilir.</p><form data-hesap-karar><label>Karar gerekçesi<textarea name="neden" required minlength="3" maxlength="200"></textarea></label><div class="dialog-actions"><button type="submit" class="primary" data-hesap-onay="true">'+(g.durum==='red'?'Yeniden izin ver':'İzin ver')+'</button>'+(g.durum==='bekliyor'?'<button type="submit" class="tehlike" data-hesap-onay="false">Reddet</button>':'')+'</div><p role="alert" aria-live="polite"></p></form></section>';
  }
  function karar(uid,ne){return '<form data-karar="'+esc(uid)+'" class="inline-form"><label>'+esc(ne)+'<select name="onay" required><option value="" selected disabled>Karar seç…</option><option value="true">Öde (onay)</option><option value="false">İptal et (red)</option></select></label><label>Gerekçe<input name="neden" required minlength="3" maxlength="200"></label><button class="primary">Kaydet</button><p role="alert"></p></form>';}
  root.PuffyYanHesap={init,stop,route};
