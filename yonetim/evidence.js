@@ -6,6 +6,7 @@ window.PuffyEvidence = { render(ctx) {
  let offset=0,ticket=0;const people=new Map([[profile.id,profile]]);
  root.innerHTML='<section class="iletisim"><h2>Kanıt arşivi</h2><p class="note">Birebir mesajların 90 günlük özel arşivi. Şikâyete bağlanan kayıtlar korunabilir. Her açılış kaydedilir. Eski silinmiş içerikler burada yeniden üretilemez. Profil adları ve kullanıcı ID numaraları günceldir.</p><div data-evidence-list></div></section>';
  const box=root.querySelector('[data-evidence-list]');
+ if(ctx.evidenceTarget){const note=document.createElement('p');note.className='note';note.textContent='Seçilen kişiyle konuşma'+(ctx.evidenceTarget.name?' · '+ctx.evidenceTarget.name:'')+' · Seçilen tarih aralığı korunur.';box.before(note);}
  const stamp=x=>new Date(x).toLocaleString('tr-TR',{timeZone:'Europe/Istanbul'});
 
  const person=id=>{
@@ -30,7 +31,8 @@ window.PuffyEvidence = { render(ctx) {
  async function load(){
   const t=++ticket;box.textContent='Arşiv yükleniyor…';
   try{
-   const d=await rpc('yonetim_dm_kanit',{p_user:profile.id,p_limit:25,p_offset:offset});
+   const target=ctx.evidenceTarget;
+   const d=target?await rpc('yonetim_dm_konusma_kaniti',{p_user:profile.id,p_peer:target.peer,p_from:target.from||null,p_to:target.to||null,p_message:target.message||null,p_limit:25,p_offset:offset}):await rpc('yonetim_dm_kanit',{p_user:profile.id,p_limit:25,p_offset:offset});
    if(t!==ticket||!root.isConnected)return;
    const ids=[...new Set((d.rows||[]).flatMap(r=>[r.sender_id,r.user_a,r.user_b]).filter(id=>id&&!people.has(id)))];
    if(ids.length&&ctx.sb){
@@ -59,7 +61,7 @@ window.PuffyEvidence = { render(ctx) {
      catch(e){article.querySelector('[data-result]').textContent=errorText(e);b.disabled=false;}
     };
    }
-  }catch(e){if(t===ticket&&root.isConnected){box.textContent=errorText(e);const b=document.createElement('button');b.textContent='Tekrar dene';b.onclick=load;box.append(b);}}
+  }catch(e){if(t===ticket&&root.isConnected){box.textContent=/PGRST202|schema cache/.test(String(e?.message||e))?'Konuşma bağlantısı sunucuda henüz etkin değil.':errorText(e);const b=document.createElement('button');b.textContent='Tekrar dene';b.onclick=load;box.append(b);}}
  }
  load();
 }};
