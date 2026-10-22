@@ -38,6 +38,21 @@
     (de&&de.supheli&&!de.inceleme?karar(k.user_id,'Bu davetin kazancı'):'')+
     ((dt.liste||[]).length?'<table class="data-table"><thead><tr><th>Davet edilen</th><th>Tarih</th><th>Yükleme</th><th>Pay</th><th>Durum</th><th></th></tr></thead><tbody>'+dt.liste.map(x=>'<tr><td><a href="#yan-hesap?kisi='+esc(String(x.ad).split('#').pop())+'">'+esc(x.ad)+'</a></td><td>'+esc(t(x.tarih))+'</td><td>'+sayi(x.yukleme)+'</td><td>'+sayi(x.pay)+'</td><td>'+(x.supheli?'Şüpheli'+(x.ayni_cihaz?' · aynı telefon':'')+' · '+esc(x.inceleme||'incelenmedi'):'Normal')+'</td><td>'+(x.supheli&&!x.inceleme?karar(x.user_id,'Kazanç'):'')+'</td></tr>').join('')+'</tbody></table>':'')+
     '</section>';
+   if(c.caps.owner){
+    const box=document.createElement('section');box.className='panel';r.querySelector('[data-dosya]').prepend(box);
+    box.innerHTML='<h2>Son cihaz için hesap izni</h2><p>Kontrol ediliyor…</p>';
+    try{
+     const state=await rpc('yonetim_son_cihaz_durumu',{p_user:k.user_id});if(ctx!==c||n!==serial)return;
+     const blocked=state.account_banned||state.device_banned||state.review!=='onay';
+     box.innerHTML='<h2>Son cihaz için hesap izni</h2><p>Hesap: <strong>'+esc(k.nickname)+' #'+esc(k.display_id)+'</strong></p>'+(!state.attempt?'<p>Engellenen cihaz denemesi yok.</p>':'<p>Son engellenme: '+esc(t(state.date))+'</p><p>Bu cihazdaki diğer hesaplar: '+esc((state.accounts||[]).map(x=>x.nickname+' #'+x.display_id).join(', ')||'Yok')+'</p><p>Hesap banı: '+(state.account_banned?'Var':'Yok')+' · Cihaz banı: '+(state.device_banned?'Var':'Yok')+'</p><p><strong>'+(blocked?'Önce ban veya hesap incelemesini değerlendir.':state.allowed?'Bu hesap son cihazda izinli.':'Hesap onaylı; son cihazın izni eksik.')+'</strong></p>'+(!blocked&&!state.allowed?'<form><label>İzin gerekçesi<textarea name="neden" required minlength="3" maxlength="200"></textarea></label><p>İzin yalnız yukarıdaki hesaba ve bu cihaza aittir. Diğer hesaplar devralmaz.</p><button class="primary">Yalnız bu hesaba, bu cihazda izin ver</button><p role="alert" aria-live="polite"></p></form>':''));
+     const form=box.querySelector('form');if(form)form.onsubmit=async event=>{
+      event.preventDefault();if(form.dataset.busy==='true')return;const reason=String(new FormData(form).get('neden')||'').trim();if(reason.length<3||reason.length>200)return;
+      form.dataset.busy='true';form.querySelector('button').disabled=true;
+      try{await rpc('yonetim_son_cihaza_izin',{p_user:k.user_id,p_attempt:state.attempt,p_version:state.version,p_neden:reason});if(ctx!==c||n!==serial)return;c.toast?.('Yalnız bu hesaba son cihazda izin verildi.');dosya(kimlik);}
+      catch(error){if(ctx!==c||n!==serial)return;form.querySelector('[role=alert]').textContent=hataMetni(error);form.dataset.busy='false';form.querySelector('button').disabled=false;}
+     };
+    }catch(error){if(ctx===c&&n===serial)box.innerHTML='<h2>Son cihaz için hesap izni</h2><p role="alert">Cihaz durumu alınamadı. Sunucu modülünü kontrol et. Mevcut hesap kararı aşağıda korunur.</p>';}
+   }
    const hf=r.querySelector('[data-hesap-karar]');
    if(hf) hf.onsubmit=async e=>{
     e.preventDefault();const err=hf.querySelector('[role=alert]');
