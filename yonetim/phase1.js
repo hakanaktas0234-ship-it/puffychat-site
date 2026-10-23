@@ -102,23 +102,58 @@
     bindAvatars(root);
     root.querySelectorAll('[data-satis]').forEach(el=>el.onclick=()=>{const [kaynak,neden]=el.dataset.satis.split(':');coinSatisDetay(kaynak,{neden:neden||null,bayi:el.dataset.bayi||null,ad:el.dataset.ad||''});});
   }
-  async function coinSatisDetay(kaynak,{neden=null,bayi=null,ad=''}={},offset=0,dlg=null){
+  async function coinSatisDetay(kaynak,{neden=null,bayi=null,ad='',arama=''}={},offset=0,dlg=null){
     const baslik=kaynak==='magaza'?'Mağaza satışları':kaynak==='bayi'?(ad?`${ad} · bayi satışları`:'Bayi satışları'):`Platform gönderimi · ${nedenAdi(neden)||'tümü'}`;
-    if(!dlg){dlg=document.createElement('dialog');dlg.innerHTML=`<h2>${esc(baslik)}</h2><p class="muted">${state.days} günlük görünüm</p><div id="satis-detay"></div><div class="dialog-actions"><button>Kapat</button></div>`;document.body.append(dlg);dlg.addEventListener('close',()=>dlg.remove());dlg.querySelector('.dialog-actions button').onclick=()=>dlg.close();dlg.showModal();}
+    if(!dlg){
+      dlg=document.createElement('dialog');
+      if(kaynak==='magaza'){dlg.style.maxWidth='1040px';dlg.style.width='96vw';}
+      dlg.innerHTML=`<h2>${esc(baslik)}</h2><p class="muted">${state.days} günlük görünüm</p><form id="magaza-search-form" style="display:flex;gap:8px;margin:12px 0;align-items:center;flex-wrap:wrap;"><input id="magaza-search-q" type="search" placeholder="GPA Sipariş No (GPA.3364-...), kullanıcı ID veya rumuz ara..." value="${esc(arama)}" style="flex:1;min-width:240px;padding:8px 12px;border-radius:8px;border:1px solid rgba(255,255,255,.2);background:rgba(0,0,0,.2);color:#fff;font-size:13px;"><button class="primary" type="submit" style="padding:8px 16px;white-space:nowrap;cursor:pointer;">Ara</button>${arama?'<button type="button" id="magaza-search-clear" style="padding:8px 12px;cursor:pointer;">Sıfırla</button>':''}${kaynak==='magaza'?'<button type="button" id="magaza-share-report" style="margin-left:auto;padding:8px 14px;background:#2563eb;color:#fff;border-radius:8px;font-weight:600;display:inline-flex;align-items:center;gap:6px;cursor:pointer;border:none;">📊 Raporu Paylaş</button>':''}</form><div id="satis-detay"></div><div class="dialog-actions"><button type="button" data-close>Kapat</button></div>`;
+      document.body.append(dlg);dlg.addEventListener('close',()=>dlg.remove());dlg.querySelector('[data-close]').onclick=()=>dlg.close();dlg.showModal();
+    }
     const root=dlg.querySelector('#satis-detay');skeleton(root);
+    const form=dlg.querySelector('#magaza-search-form');
+    if(form){
+      form.onsubmit=e=>{e.preventDefault();const q=dlg.querySelector('#magaza-search-q')?.value?.trim()||'';coinSatisDetay(kaynak,{neden,bayi,ad,arama:q},0,dlg);};
+      const clearBtn=dlg.querySelector('#magaza-search-clear');
+      if(clearBtn)clearBtn.onclick=()=>coinSatisDetay(kaynak,{neden,bayi,ad,arama:''},0,dlg);
+    }
     try{
-      const d=await rpc('admin_coin_satis_detay',{p_gun:state.days,p_kaynak:kaynak,p_bayi:bayi,p_neden:neden,p_limit:50,p_offset:offset});if(!dlg.open)return;
+      const d=await rpc('admin_coin_satis_detay',{p_gun:state.days,p_kaynak:kaynak,p_bayi:bayi,p_neden:neden,p_limit:50,p_offset:offset,p_arama:arama||null});if(!dlg.open)return;
       const rows=d.rows||[];
-      const basliklar=kaynak==='bayi'?['Zaman','Bayi','Alıcı','Coin','Tutar','Durum']:kaynak==='magaza'?['Zaman','Mağaza','Ürün','Alıcı','Coin','Tutar','Durum']:['Zaman','Gönderen','Alıcı','Coin','Sebep','Durum'];
+      const btnRapor=dlg.querySelector('#magaza-share-report');
+      if(btnRapor){
+        btnRapor.onclick=()=>{
+          const toplamCoin=rows.reduce((acc,r)=>acc+(Number(r.coin)||0),0);
+          const toplamCiro=rows.reduce((acc,r)=>acc+(Number(r.tutar)||0),0);
+          const metin=['📊 PUFFY MAĞAZA SATIŞ RAPORU','━━━━━━━━━━━━━━━━━━',`🗓️ Dönem: Son ${state.days} gün${arama?` (Filtre: "${arama}")`:''}`,`📦 Toplam Sipariş: ${num(d.total)} adet`,`💎 Toplam Coin: ${num(toplamCoin)} Coin`,`💰 Toplam Ciro: ${tl(toplamCiro)}`,'━━━━━━━━━━━━━━━━━━',`Rapor Tarihi: ${new Date().toLocaleString('tr-TR')}`].join('\n');
+          if(navigator.share&&window.isSecureContext){navigator.share({title:'Puffy Satış Raporu',text:metin}).catch(()=>navigator.clipboard.writeText(metin).then(()=>toast('Rapor panoya kopyalandı!')));}else{navigator.clipboard.writeText(metin).then(()=>toast('Rapor panoya kopyalandı!'));}
+        };
+      }
+      const basliklar=kaynak==='bayi'?['Zaman','Bayi','Alıcı','Coin','Tutar','Durum']:kaynak==='magaza'?['Zaman','GPA Sipariş No','Alıcı','Coin','Tutar','Mağaza','Durum','İşlem']:['Zaman','Gönderen','Alıcı','Coin','Sebep','Durum'];
       const satir=x=>kaynak==='bayi'?[esc(date(x.zaman)),kisi(x.bayi),kisi(x.alici),num(x.coin),tl(x.tutar),x.iade?'İade':'Tamam']
-        :kaynak==='magaza'?[esc(date(x.zaman)),esc(x.kaynak_detay||'—'),esc(x.urun||'—'),kisi(x.alici),num(x.coin),tl(x.tutar),x.iade?'İade edildi':'Tamam']
+        :kaynak==='magaza'?[
+          esc(date(x.zaman)),
+          x.gpa_kodu?`<div style="display:inline-flex;align-items:center;gap:4px;"><code style="font-size:11px;background:rgba(255,255,255,.08);padding:2px 6px;border-radius:4px;user-select:all;">${esc(x.gpa_kodu)}</code><button type="button" data-copy-gpa="${esc(x.gpa_kodu)}" title="Kodu Kopyala" style="padding:2px 6px;cursor:pointer;background:transparent;border:none;font-size:13px;">📋</button></div>`:'<span class="muted">—</span>',
+          kisi(x.alici),num(x.coin),tl(x.tutar),esc(x.kaynak_detay||'Google Play'),x.iade?'<span style="color:#ef4444;font-weight:600;">İade edildi</span>':'<span style="color:#22c55e;font-weight:600;">Tamam</span>',
+          `<button type="button" data-share-receipt="${esc(x.id)}" style="padding:4px 8px;font-size:12px;border-radius:6px;cursor:pointer;background:rgba(59,130,246,.15);color:#60a5fa;border:1px solid rgba(59,130,246,.3);">📤 Paylaş</button>`
+        ]
         :[esc(date(x.zaman)),kisi(x.bayi),kisi(x.alici),num(x.coin),nedenAdi(x.neden),x.iade?'Geri alındı':'Tamam'];
-      root.innerHTML=(rows.length?table(basliklar,rows.map(satir)):'<div class="empty-state"><strong>Kayıt yok</strong><div>Bu dönemde bu kaynaktan coin çıkışı olmamış.</div></div>')+
+      root.innerHTML=(rows.length?table(basliklar,rows.map(satir)):'<div class="empty-state"><strong>Kayıt yok</strong><div>Bu kriterlere uygun coin çıkışı veya sipariş bulunamadı.</div></div>')+
         `<div class="pager"><span>${num(d.total)} kayıt</span><button data-prev ${offset===0?'disabled':''}>Önceki</button><button data-next ${offset+50>=Number(d.total)?'disabled':''}>Sonraki</button></div>`;
       bindAvatars(root);
-      root.querySelector('[data-prev]').onclick=()=>coinSatisDetay(kaynak,{neden,bayi,ad},Math.max(0,offset-50),dlg);
-      root.querySelector('[data-next]').onclick=()=>coinSatisDetay(kaynak,{neden,bayi,ad},offset+50,dlg);
-    }catch(e){pending(root,e,()=>coinSatisDetay(kaynak,{neden,bayi,ad},offset,dlg));}
+      root.querySelectorAll('[data-copy-gpa]').forEach(b=>b.onclick=e=>{e.stopPropagation();navigator.clipboard.writeText(b.dataset.copyGpa).then(()=>toast('GPA sipariş kodu kopyalandı!')).catch(()=>toast('Kopyalanamadı.'));});
+      root.querySelectorAll('[data-share-receipt]').forEach(b=>b.onclick=e=>{
+        e.stopPropagation();
+        const item=rows.find(r=>String(r.id)===String(b.dataset.shareReceipt));
+        if(!item)return;
+        const aliciAdi=item.alici?.ad||'Bilinmiyor';
+        const aliciId=item.alici?.display_id?` (ID: ${item.alici.display_id})`:'';
+        const metin=['🧾 PUFFY SİPARİŞ DEKONTU','━━━━━━━━━━━━━━━━━━',`📦 Sipariş No (GPA): ${item.gpa_kodu||'—'}`,`👤 Müşteri: ${aliciAdi}${aliciId}`,`💎 Coin Miktarı: ${num(item.coin)} Coin`,`💰 Tutar: ${tl(item.tutar)}`,`🏪 Satış Kanalı: ${item.kaynak_detay||'Google Play Store'}`,`📅 İşlem Tarihi: ${date(item.zaman)}`,`✅ Durum: ${item.iade?'İADE EDİLDİ':'BAŞARILI / TESLİM EDİLDİ'}`,'━━━━━━━━━━━━━━━━━━','Puffy Güvenlik & Destek Birimi'].join('\n');
+        if(navigator.share&&window.isSecureContext){navigator.share({title:'Puffy Sipariş Dekontu',text:metin}).catch(()=>navigator.clipboard.writeText(metin).then(()=>toast('Dekont panoya kopyalandı!')));}else{navigator.clipboard.writeText(metin).then(()=>toast('Dekont panoya kopyalandı!'));}
+      });
+      root.querySelector('[data-prev]').onclick=()=>coinSatisDetay(kaynak,{neden,bayi,ad,arama},Math.max(0,offset-50),dlg);
+      root.querySelector('[data-next]').onclick=()=>coinSatisDetay(kaynak,{neden,bayi,ad,arama},offset+50,dlg);
+    }catch(e){pending(root,e,()=>coinSatisDetay(kaynak,{neden,bayi,ad,arama},offset,dlg));}
   }
   async function overview() {
     const root=$('#s-ozet'),epoch=++state.epoch;
