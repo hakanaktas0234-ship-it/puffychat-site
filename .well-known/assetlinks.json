@@ -1,11 +1,16 @@
 [
   {
-    "relation": ["delegate_permission/common.handle_all_urls"],
+    "relation": [
+      "delegate_permission/common.handle_all_urls"
+    ],
     "target": {
       "namespace": "android_app",
       "package_name": "com.drgdijital.puffy",
       "sha256_cert_fingerprints": [
-        "9A:28:2A:D8:D7:AD:D9:52:4A:73:78:5A:27:09:92:B3:03:7D:AE:4F:CC:5F:8A:26:44:D2:2F:93:08:3E:AF:BA"
+        "9A:28:2A:D8:D7:AD:D9:52:4A:73:78:5A:27:09:92:B3:03:7D:AE:4F:CC:5F:8A:26:44:D2:2F:93:08:3E:AF:BA",
+        "F5:D4:B5:DC:96:9F:3C:5B:AB:55:FA:48:7B:5E:ED:8B:E9:A5:D5:55:9D:BB:49:D3:C6:5E:AC:26:0C:41:8F:18",
+        "EF:18:CF:DB:B0:8E:FF:4E:62:AA:D5:09:D0:9A:26:2B:05:25:47:B7:2D:FB:A2:CC:38:71:3E:AC:CC:EB:02:19",
+        "79:00:C1:71:BB:0C:91:C1:5D:6F:82:A6:FC:59:05:1D:86:6D:27:2D:E0:46:49:78:53:79:CC:73:91:5B:1D:F2"
       ]
     }
   }
