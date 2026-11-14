@@ -8,9 +8,10 @@
   let observer = null;
   let desiredTab = null;
   let pendingPage = 0;
+  let exchangePage = 0;
   const esc = x => String(x ?? '').replace(/[&<>"']/g, x => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[x]));
   const money = x => Number(x || 0).toLocaleString('tr-TR');
-  const kinds = {liste:'Bayiler',atama:'Yeni bayi / bayilik durumu',yukleme:'Bekleyen yüklemeler',ayar:'Kur ve bonuslar'};
+  const kinds = {liste:'Bayiler',atama:'Yeni bayi / bayilik durumu',yukleme:'Bekleyen yüklemeler',aktarim:'Kazanç aktarımları',ayar:'Kur ve bonuslar'};
   const fields = [
     ['usd_to_coin_rate','Mağaza kuru · 1 USD kaç coin'],
     ['usd_to_try_rate','Dolar kuru · 1 USD kaç TRY'],
@@ -29,6 +30,7 @@
     desiredTab = null;
     ctx = null;
     pendingPage = 0;
+    exchangePage = 0;
   }
   function toolbar(root, active = 'liste') {
     if (root.querySelector('[data-dealer-hub]')) return;
@@ -93,12 +95,14 @@
   phase.route = function(hash) {
     epoch++;
     if(hash==='onay/bayi_yukleme'&&ctx?.caps.owner){location.hash='bayi-merkezi/yukleme';return true;}
-    const match = /^bayi-merkezi\/(atama|yukleme|ayar)(?:\?.*)?$/.exec(hash);
+    const match = /^bayi-merkezi\/(atama|yukleme|aktarim|ayar)(?:\?.*)?$/.exec(hash);
     if (!match) return previous.route.call(this,hash);
     if (!ctx?.caps.admin || (['yukleme','ayar'].includes(match[1]) && !ctx.caps.owner)) {
       location.hash = 'bayiler';
       return true;
     }
+    pendingPage = 0;
+    exchangePage = 0;
     render(match[1]);
     return true;
   };
@@ -150,6 +154,27 @@
         body.querySelectorAll('[data-topup-dealer]').forEach(b=>b.onclick=()=>{desiredTab='yukleme';location.hash='bayiler/'+b.dataset.topupDealer;});
         body.querySelector('[data-prev]').onclick=()=>{pendingPage--;render(view);};
         body.querySelector('[data-next]').onclick=()=>{pendingPage++;render(view);};
+      } else if (view==='aktarim') {
+        const T=window.PuffyDealerTransfers;
+        if(!T)throw new Error('Bayi aktarım modülü yüklenemedi.');
+        const d=await rpc('yonetim_bayi_aktarimlari',{p_bayi:null,p_limit:25,p_offset:exchangePage*25});
+        if(!valid())return;
+        const rows=d.rows||[],total=Number(d.total||0),openCount=Number(d.open_count||0),disputedCount=Number(d.disputed_count||0);
+        const tableRows=rows.map(x=>{
+          const sender=`<a href="#kullanici/${esc(x.sender_id)}">${esc(x.sender_name||'Kullanıcı')}</a>${x.sender_display_id?`<small>ID ${esc(x.sender_display_id)}</small>`:''}`;
+          const dealer=`<a href="#bayiler/${esc(x.dealer_id)}" data-dealer-aktarim="${esc(x.dealer_id)}">${esc(x.dealer_name||'Bayi')}</a>${x.dealer_display_id?`<small>ID ${esc(x.dealer_display_id)}</small>`:''}`;
+          const amount=`${x.asset==='USD'?T.usd(x.amount)+' USD':T.num(x.amount)+' Puffy'}<small>${T.usd(x.cash_amount)} USD ödeme</small>`;
+          const coin=`${T.num(x.amount_coin)} coin`;
+          const status=T.exchangeStatusHtml(x);
+          const created=`${esc(T.date(x.created_at))}${x.resolved_at?`<small>Çözüm: ${esc(T.date(x.resolved_at))}</small>`:''}`;
+          const action=T.canResolveExchange(x.status,c.caps.owner)?`<button data-exchange-resolve="${esc(x.id)}">Çözümle</button>`:'—';
+          return '<tr>'+[sender,dealer,amount,coin,status,created,action].map(v=>'<td>'+v+'</td>').join('')+'</tr>';
+        });
+        body.innerHTML=`<div class="bayi-overview"><div><small>Toplam aktarım</small><strong>${T.num(total)}</strong></div><div><small>Açık / bekleyen</small><strong>${T.num(openCount)}</strong></div><div><small>İtirazda</small><strong>${T.num(disputedCount)}</strong></div></div><p class="note">Kazançtan bayiye aktarım talepleri ve itirazlar. İtirazlı veya takılı işlemleri yalnızca platform sahibi çözümleyebilir.</p>${T.tableHtml(['Gönderen','Bayi','Kazanç / Ödeme','Bayi Stoğu','Durum / Referans','Tarih','İşlem'],tableRows)}<div class="pager"><button data-prev ${exchangePage===0?'disabled':''}>Önceki</button><span>${T.num(total)} kayıt · Sayfa ${exchangePage+1}</span><button data-next ${(exchangePage+1)*25>=total?'disabled':''}>Sonraki</button></div>`;
+        body.querySelectorAll('[data-dealer-aktarim]').forEach(a=>a.onclick=e=>{e.preventDefault();desiredTab='aktarim';location.hash='bayiler/'+a.dataset.dealerAktarim;});
+        body.querySelectorAll('[data-exchange-resolve]').forEach(b=>b.onclick=()=>T.openResolveBox({callRpc:rpc,row:rows.find(x=>x.id===b.dataset.exchangeResolve),button:b,valid,onDone:()=>render('aktarim'),errorText:T.error}));
+        body.querySelector('[data-prev]').onclick=()=>{exchangePage--;render(view);};
+        body.querySelector('[data-next]').onclick=()=>{exchangePage++;render(view);};
       } else {
         const d=await rpc('yonetim_ayarlar_getir');if(!valid())return;
         body.innerHTML='<p class="note">Mağaza ve dolar kuru ortak ekonomi ayarlarıdır. Bayi toptan kuru ve bonuslar burada birlikte yönetilir. Her kayıt gerekçe ve güncel sürüm kontrolü ister.</p>'+fields.map(([key,label])=>`<form class="dealer-hub-setting" data-key="${key}"><label>${label}<input name="value" type="number" min="0" step="any" required value="${esc(d.platform?.[key]?.value??'')}"></label><label>Gerekçe<input name="reason" required minlength="3" maxlength="300"></label><button>Kaydet</button><p data-result role="status"></p></form>`).join('')+'<h2>Bayi bonus kademeleri</h2><form data-tiers><div data-tier-rows></div><button type="button" data-add>Kademe ekle</button><label>Gerekçe<input name="reason" minlength="3" required maxlength="300"></label><button>Kademeleri kaydet</button><p data-result role="status"></p></form>';
