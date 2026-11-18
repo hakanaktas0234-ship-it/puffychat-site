@@ -9,6 +9,8 @@ ozetler = ' '.join("'sha256-" + base64.b64encode(hashlib.sha256(b.encode('utf-8'
 csp = ("default-src 'self'; script-src 'self' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net " + ozetler +
        "; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: blob: https:; media-src 'self' blob: https:; "
        "connect-src 'self' https://rjdddbwotczhagdulwco.supabase.co wss://rjdddbwotczhagdulwco.supabase.co "
+       # Puffy RTC (LiveKit Cloud + kendi SFU sunucumuz - sessiz oda dinleme)
+       "https://rtc.puffychat.com wss://rtc.puffychat.com https://*.livekit.cloud wss://*.livekit.cloud "
        # Zego (yalnız sessiz oda dinleme): sinyal ve kayıt sunucuları
        "https://*.zego.im wss://*.zego.im https://*.zegocloud.com wss://*.zegocloud.com https://*.coolzcloud.com wss://*.coolzcloud.com "
        "https://*.coolbcloud.com wss://*.coolbcloud.com https://*.cooldcloud.com wss://*.cooldcloud.com https://*.coolfcloud.com wss://*.coolfcloud.com https://*.coolgcloud.com wss://*.coolgcloud.com; "

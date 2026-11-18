@@ -1,0 +1,6 @@
+Paket: livekit-client@2.11.4 (UMD tarayıcı paketi)
+Kaynak: npm registry (livekit-client@2.11.4 -> package/dist/livekit-client.umd.js)
+Dosya: livekit-client-2.11.4.umd.js
+SHA-256: 8d714d56c9f337f38872aa2e146f6c36850324e52ee58b958ddf04a19c2b9d88
+SRI (SHA-384): sha384-mjmdBinxXI3Vg6bewyGDzBLLET/PIBHbsXFHC2TwJ7mL7bF4Wg+8U2O10nFpyO0u
+Amaç: Yönetim panelinde Puffy RTC (LiveKit WebRTC SFU) ile yalnızca dinleme (subscribe-only) oda dinleme oturumu. Mikrofon/yayın yetkisi içermez ve istemez.

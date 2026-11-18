@@ -23,7 +23,8 @@
    ['support_email','Destek e-postası','','text'],
    ['support_whatsapp','Destek WhatsApp','','text'],
    ['support_faq_url','SSS bağlantısı','https:// ile başlamalı.','text'],
-   ['support_room_id','Destek odası ID','','text']]}];
+   ['support_room_id','Destek odası ID','','text'],
+   ['rtc_motoru','Ses ve görüntü motoru (RTC)','zego = %100 Zego · oda:1989,2040 = yalnız seçili odalar Puffy RTC · puffy_rtc = tüm yeni girişler Puffy RTC.','text']]}];
  const ARAMA=[['yayinci_dk_coin','Görüntülü dakika (coin)'],['yayinci_sesli_dk_coin','Sesli dakika (coin)'],['dip_dk_coin','Call host olmayan görüntülü dakika (coin)'],['dip_sesli_dk_coin','Call host olmayan sesli dakika (coin)'],['yayinci_pay','Yayıncı payı (0.30 = %30)'],['ajans_pay','Ajans payı (0.10 = %10)'],['ucretsiz_sn','Ücretsiz saniye'],['min_dolar_puffy','Dolar talebi için en az Puffy'],['puffy_usd_1000','1.000 Puffy kaç $']];
  const HEDEF={herkes:'Herkes',vip:'VIP üyeler',ajans_sahipleri:'Ajans sahipleri',call_host:'Call Host\'lar',bayiler:'Bayiler'};
  function mount(id,title){const root=$('#s-ayarlar');document.querySelectorAll('.workspace > [id^="s-"]').forEach(e=>e.classList.toggle('hidden',e!==root));document.querySelectorAll('nav a.menu').forEach(a=>a.classList.toggle('aktif',a.dataset.sayfa===id));$('#uyg nav').classList.remove('open');$('#panel-topbar .mobile-menu')?.setAttribute('aria-expanded','false');$('#route-name').textContent=title;return root;}
